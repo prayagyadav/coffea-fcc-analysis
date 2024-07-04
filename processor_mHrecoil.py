@@ -32,7 +32,11 @@ def index_mask(input_array, index_array):
             reco_list = input_array[event_index]
             output_array.append([reco_list[i] for i in  event_mask])
         return output_array
-    return ak.Array(numba_wrap(input_array,index_array,counts))
+    out = ak.Array(numba_wrap(input_array,index_array,counts))
+    parts = ak.num(out, axis=0)
+    # return dak.from_awkward(out,npartitions=int(parts))
+    return out
+
 
 #Begin the processor definition
 class mHrecoil(processor.ProcessorABC):
@@ -41,14 +45,11 @@ class mHrecoil(processor.ProcessorABC):
     Note: Use only BaseSchema with this processor
     '''
     def __init__(self):
-        
         pass
     def process(self,events):
-        # Filter out any events which no reconstructed particles
+        # Filter out any event with no reconstructed particles
         Recon = events['ReconstructedParticles/ReconstructedParticles.energy']#.compute()
-        useful_events = events[dak.num(Recon) > 0]
-        
-        Muon_index = useful_events['Muon#0/Muon#0.index']#.compute()
+        useful_events = events[ak.num(Recon) > 0]
 
         # Generate Reconstructed Particle Attributes
         Reco_E = useful_events['ReconstructedParticles/ReconstructedParticles.energy']#.compute()
@@ -59,6 +60,7 @@ class mHrecoil(processor.ProcessorABC):
         Reco_mass = useful_events['ReconstructedParticles/ReconstructedParticles.mass']#.compute()
 
         # Generate Muon Attributes
+        Muon_index = useful_events['Muon#0/Muon#0.index']#.compute()
         Muon_E = index_mask(Reco_E,Muon_index)
         Muon_px = index_mask(Reco_px,Muon_index)
         Muon_py = index_mask(Reco_py,Muon_index)
@@ -69,41 +71,61 @@ class mHrecoil(processor.ProcessorABC):
         # Create Array of Muon Lorentz Vector 
         Muon = ak.zip({"px":Muon_px,"py":Muon_py,"pz":Muon_pz,"E":Muon_E,"q":Muon_q,}, with_name="Momentum4D")
 
-        # Produce combinations of Muon Pairs possible within an event
+        # Produce all the combinations of Muon Pairs possible within an event
         combs = ak.combinations(Muon,2)
 
-        # Get DiMuons
+        # Get dimuons
         mu1 , mu2 = ak.unzip(combs)
         di_muon = mu1 + mu2
 
-        # Choose the dimuon with highest mass
-        di_muon = di_muon[ak.num(di_muon) > 0]
-        di_muon_mass = ak.Array([i[0] for i in ak.sort(di_muon.mass, ascending=False)])
+        # Selection 0 : Only one Z candidate in an event
+        di_muon = di_muon[ak.num(di_muon) == 1]
+        di_muon_mass = ak.flatten(di_muon.mass)
+        # di_muon_mass = ak.Array([i[0] for i in ak.sort(di_muon.mass, ascending=False)])
 
         # Choose dimuon which is made up of two oppositely charged muons
         q_sum = mu1.q + mu2.q
-        q_sum_array = q_sum[ak.num(q_sum)>0]
+        q_sum_array = q_sum[ak.num(q_sum) == 1]
         q_sum_mask = ak.all(q_sum_array == 0, axis=1)
-        Z_cand_m = di_muon_mass[q_sum_mask]
         Z_cand = di_muon[q_sum_mask]
-
-        # Create Z-Candidate mass histogram
-        hist_Zm = hist.Hist.new.Regular(100,0,150).Double().fill(Z_cand_m)
 
         #Recoil Calculation
         ecm = 240 #GeV # com energy
         initial = ak.zip({"px":0,"py":0,"pz":0,"E":ecm}, with_name="Momentum4D")
         Recoil = initial - Z_cand
 
-        # Create Recoil mass histogram
-        hist_Recoilm = hist.Hist.new.Regular(100,60,160).Double().fill(ak.flatten(Recoil.mass))
-
+        # Selection 1 : Selection 0 + 80 < M_Z < 100
+        zmassmask = (Z_cand.mass > 80) & (Z_cand.mass < 100)
+        Z_cand_sel1 = Z_cand[zmassmask]
+        Recoil_sel1 = Recoil[zmassmask]
 
         #Prepare output
         Output = {
             'histograms': {
-                'Z_mass': hist_Zm,
-                'Recoil_mass':hist_Recoilm
+                'sel0': {
+                'Zm': hist.Hist.new.Regular(125,0,250).Double().fill(ak.flatten(Z_cand.mass)),
+                'Zm_zoom' : hist.Hist.new.Regular(40,80,100).Double().fill(ak.flatten(Z_cand.mass)),
+                'Recoilm': hist.Hist.new.Regular(100,0,200).Double().fill(ak.flatten(Recoil.mass)),
+                'Recoilm_zoom' : hist.Hist.new.Regular(200,80,160).Double().fill(ak.flatten(Recoil.mass)),
+                'Recoilm_zoom1' : hist.Hist.new.Regular(100,120,140).Double().fill(ak.flatten(Recoil.mass)),
+                'Recoilm_zoom2' : hist.Hist.new.Regular(200,120,140).Double().fill(ak.flatten(Recoil.mass)),
+                'Recoilm_zoom3' : hist.Hist.new.Regular(400,120,140).Double().fill(ak.flatten(Recoil.mass)),
+                'Recoilm_zoom4' : hist.Hist.new.Regular(800,120,140).Double().fill(ak.flatten(Recoil.mass)),
+                'Recoilm_zoom5' : hist.Hist.new.Regular(2000,120,140).Double().fill(ak.flatten(Recoil.mass)),
+                'Recoilm_zoom6' : hist.Hist.new.Regular(100,130.3,132.5).Double().fill(ak.flatten(Recoil.mass))
+                },
+                'sel1': {
+                'Zm': hist.Hist.new.Regular(125,0,250).Double().fill(ak.flatten(Z_cand_sel1.mass)),
+                'Zm_zoom' : hist.Hist.new.Regular(40,80,100).Double().fill(ak.flatten(Z_cand_sel1.mass)),
+                'Recoilm': hist.Hist.new.Regular(100,0,200).Double().fill(ak.flatten(Recoil_sel1.mass)),
+                'Recoilm_zoom' : hist.Hist.new.Regular(200,80,160).Double().fill(ak.flatten(Recoil_sel1.mass)),
+                'Recoilm_zoom1' : hist.Hist.new.Regular(100,120,140).Double().fill(ak.flatten(Recoil_sel1.mass)),
+                'Recoilm_zoom2' : hist.Hist.new.Regular(200,120,140).Double().fill(ak.flatten(Recoil_sel1.mass)),
+                'Recoilm_zoom3' : hist.Hist.new.Regular(400,120,140).Double().fill(ak.flatten(Recoil_sel1.mass)),
+                'Recoilm_zoom4' : hist.Hist.new.Regular(800,120,140).Double().fill(ak.flatten(Recoil_sel1.mass)),
+                'Recoilm_zoom5' : hist.Hist.new.Regular(2000,120,140).Double().fill(ak.flatten(Recoil_sel1.mass)),
+                'Recoilm_zoom6' : hist.Hist.new.Regular(100,130.3,132.5).Double().fill(ak.flatten(Recoil_sel1.mass))
+                }
             }
         }
 

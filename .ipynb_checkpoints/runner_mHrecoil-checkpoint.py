@@ -79,7 +79,7 @@ if __name__=="__main__":
     
         return new_fileset
 
-    myfileset = add_redirector(filesetname="./fileset.json", redirector=inputs.redirector)
+    myfileset = add_redirector(filesetname="./local_fileset.json", redirector=inputs.redirector)
 
 
     ###################
