@@ -15,6 +15,8 @@ if __name__=="__main__":
     from processor_mHrecoil import mHrecoil
     from coffea.dataset_tools import apply_to_fileset,max_chunks,preprocess
     import dask
+    from dask.diagnostics import ProgressBar
+    ProgressBar().register()
 
     ##############################
     # Define the terminal inputs #
