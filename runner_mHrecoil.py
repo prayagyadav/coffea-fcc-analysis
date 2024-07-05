@@ -40,9 +40,17 @@ if __name__=="__main__":
     parser.add_argument(
         "-m",
         "--maxchunks",
-        help="Enter the number of chunks to be processed; by default None ie full dataset",
+        help="Enter the number of chunks to be processed; by default 10",
         type=int
         )
+    
+    parser.add_argument(
+        "-f",
+        "--nfiles",
+        help="Enter the number of files to run; by default None ie full dataset",
+        type=int
+        )
+    
     inputs = parser.parse_args()
 
     def getraw(jsonfilename):
@@ -79,8 +87,22 @@ if __name__=="__main__":
     
         return new_fileset
 
-    myfileset = add_redirector(filesetname="./local_fileset.json", redirector=inputs.redirector)
+    myfileset = add_redirector(filesetname="./full_fileset.json", redirector=inputs.redirector)
+    
+    #def reduce_fileset(fileset_dict,n=None):
+    #    print('Running ',n ,' files per key ...' )
+    #    output_dict = fileset_dict
+    #    for key in fileset_dict:
+    #        new_file_dict = {}
+    #        new_file_keys = list(fileset_dict.keys())
+    #        new_sliced_keys = new_file_keys[:n]
+    #        for file in new_sliced_keys:
+    #            new_file_dict[file]="events"
+    #        output_dict[key]['files'] = new_file_dict
+    #    print(output_dict)
+    #    return output_dict
 
+    #myfileset = reduce_fileset(myfileset,inputs.nfiles)
 
     ###################
     # Run the process #
