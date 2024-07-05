@@ -15,11 +15,11 @@ if __name__=="__main__":
     from processor_mHrecoil import mHrecoil
     from coffea.dataset_tools import apply_to_fileset,max_chunks,preprocess
     import dask
-    from dask.diagnostics import ProgressBar, ResourceProfiler
+    from dask.diagnostics import ProgressBar#, ResourceProfiler
     pgb = ProgressBar()
     pgb.register()
-    rprof = ResourceProfiler()
-    rprof.register()
+    #rprof = ResourceProfiler()
+    #rprof.register()
     
 
     ##############################
@@ -145,14 +145,14 @@ if __name__=="__main__":
     ###############
     # Run Summary #
     ###############
-    print('_______________________________________________')
-    print('        Summary of Resource Utilization        ')
-    print('_______________________________________________')
-    ntask = 0
-    for task in rprof.results:
-        print(f'Task {ntask}: {task}')
-        ntask += 1
-    print('_______________________________________________')
+    #print('_______________________________________________')
+    #print('        Summary of Resource Utilization        ')
+    #print('_______________________________________________')
+    #ntask = 0
+    #for task in rprof.results:
+    #    print(f'Task {ntask}: {task}')
+    #    ntask += 1
+    #print('_______________________________________________')
     
     ##########################
     # Create the output file #
@@ -163,5 +163,5 @@ if __name__=="__main__":
     if not os.path.exists(path):
         os.makedirs(path)
     util.save(output= Output, filename=path+output_file)
-    print(f"File {output_file} saved.")
+    print(f"File {output_file} saved at {path}")
     print("Execution completed.")
