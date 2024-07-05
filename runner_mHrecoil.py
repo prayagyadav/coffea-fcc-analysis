@@ -106,7 +106,7 @@ if __name__=="__main__":
         return output
 
     myfileset = reduce_fileset(raw_myfileset,inputs.nfiles)
-    print(myfileset)
+    #print(myfileset)
 
     ###################
     # Run the process #
@@ -120,7 +120,7 @@ if __name__=="__main__":
     save_form=False,
     )
     
-    print(dataset_runnable)
+    #print(dataset_runnable)
 
     #For local dask execution
     if inputs.executor == "dask" :
