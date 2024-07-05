@@ -11,9 +11,6 @@ import numba
 import vector
 vector.register_awkward()
 
-from dask.distributed import Client
-client = Client()
-
 
 def index_mask(input_array, index_array):
     '''

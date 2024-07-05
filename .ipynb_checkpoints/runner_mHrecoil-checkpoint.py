@@ -15,8 +15,12 @@ if __name__=="__main__":
     from processor_mHrecoil import mHrecoil
     from coffea.dataset_tools import apply_to_fileset,max_chunks,preprocess
     import dask
-    from dask.diagnostics import ProgressBar
-    ProgressBar().register()
+    from dask.diagnostics import ProgressBar, ResourceProfiler
+    pgb = ProgressBar()
+    pgb.register()
+    rprof = ResourceProfiler()
+    rprof.register()
+    
 
     ##############################
     # Define the terminal inputs #
@@ -89,7 +93,7 @@ if __name__=="__main__":
     
         return new_fileset
 
-    raw_myfileset = add_redirector(filesetname="./full_fileset.json", redirector=inputs.redirector)
+    raw_myfileset = add_redirector(filesetname="./fileset.json", redirector=inputs.redirector)
     
     def reduce_fileset(fileset,n=None):
         output = fileset
@@ -106,7 +110,7 @@ if __name__=="__main__":
         return output
 
     myfileset = reduce_fileset(raw_myfileset,inputs.nfiles)
-    print(myfileset)
+    #print(myfileset)
 
     ###################
     # Run the process #
@@ -120,7 +124,7 @@ if __name__=="__main__":
     save_form=False,
     )
     
-    print(dataset_runnable)
+    #print(dataset_runnable)
 
     #For local dask execution
     if inputs.executor == "dask" :
@@ -130,12 +134,26 @@ if __name__=="__main__":
                     max_chunks(dataset_runnable, inputs.maxchunks),
                     schemaclass=BaseSchema,
         )
-        (Output,) = dask.compute(to_compute)        
-        
+        computed = dask.compute(to_compute)
+        # progress(computed)
+        (Output,) = computed
     #For condor execution
     elif inputs.executor == "condor" :
         raise('HTCondor execution is not available yet!')
-        
+
+    
+    ###############
+    # Run Summary #
+    ###############
+    print('_______________________________________________')
+    print('        Summary of Resource Utilization        ')
+    print('_______________________________________________')
+    ntask = 0
+    for task in rprof.results:
+        print(f'Task {ntask}: {task}')
+        ntask += 1
+    print('_______________________________________________')
+    
     ##########################
     # Create the output file #
     ##########################
