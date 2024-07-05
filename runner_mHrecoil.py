@@ -87,7 +87,7 @@ if __name__=="__main__":
     
         return new_fileset
 
-    myfileset = add_redirector(filesetname="./full_fileset.json", redirector=inputs.redirector)
+    raw_myfileset = add_redirector(filesetname="./full_fileset.json", redirector=inputs.redirector)
     
     def reduce_fileset(fileset,n=None):
         output = fileset
@@ -103,7 +103,8 @@ if __name__=="__main__":
         print('Running ',n ,' files per key ...' )
         return output
 
-    myfileset = reduce_fileset(myfileset,inputs.nfiles)
+    myfileset = reduce_fileset(raw_myfileset,inputs.nfiles)
+    print(myfileset)
 
     ###################
     # Run the process #
@@ -116,8 +117,10 @@ if __name__=="__main__":
     skip_bad_files=True,
     save_form=False,
     )
+    
+    print(dataset_runnable)
 
-    #For dask execution
+    #For local dask execution
     if inputs.executor == "dask" :
         print("Executing locally with dask ...")
         to_compute = apply_to_fileset(
