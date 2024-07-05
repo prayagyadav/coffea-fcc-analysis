@@ -89,20 +89,21 @@ if __name__=="__main__":
 
     myfileset = add_redirector(filesetname="./full_fileset.json", redirector=inputs.redirector)
     
-    #def reduce_fileset(fileset_dict,n=None):
-    #    print('Running ',n ,' files per key ...' )
-    #    output_dict = fileset_dict
-    #    for key in fileset_dict:
-    #        new_file_dict = {}
-    #        new_file_keys = list(fileset_dict.keys())
-    #        new_sliced_keys = new_file_keys[:n]
-    #        for file in new_sliced_keys:
-    #            new_file_dict[file]="events"
-    #        output_dict[key]['files'] = new_file_dict
-    #    print(output_dict)
-    #    return output_dict
+    def reduce_fileset(fileset,n=None):
+        output = fileset
+        for key in fileset:
+            new_fileset = {}
+            fileset_keys = list(fileset[key]['files'].keys())
+            if n==None :
+                n = len(fileset_keys)
+            sliced_keys = fileset_keys[:n]
+            for file in sliced_keys:
+                new_fileset[file]="events"
+            output[key]['files'] = new_fileset
+        print('Running ',n ,' files per key ...' )
+        return output
 
-    #myfileset = reduce_fileset(myfileset,inputs.nfiles)
+    myfileset = reduce_fileset(myfileset,inputs.nfiles)
 
     ###################
     # Run the process #
