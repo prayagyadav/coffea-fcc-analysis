@@ -6,6 +6,7 @@ import os
 import numpy as np
 import pandas as pd
 
+
 #########################
 # Load the coffea files #
 #########################
@@ -13,9 +14,7 @@ print("Loading coffea files...")
 input_path = "outputs/FCCee/higgs/mH-recoil/mumu/"
 filename = "mHrecoil_mumu.coffea"
 input = load(input_path+filename)
-key = "p8_ee_ZH_ecm240"
-dataset_keys = ["p8_ee_ZH_ecm240","p8_ee_ZZ_ecm240","p8_ee_WW_ecm240"]
-selection_dictionary = input[key]['histograms']
+
 
 ###################
 # Plot Properties #
@@ -34,43 +33,95 @@ plot_props = {
 }
 props = pd.DataFrame(plot_props)
 
-#Choose the required plots here
+
+##################################
+# Choose the required plots here #
+##################################
 selections = ['sel0','sel1']
 stack = [True, False]
 log = [True, False]
 formats = ['png','pdf']
 req_plots = ['Zm', 'Zm_zoom', 'Recoilm', 'Recoilm_zoom', 'Recoilm_zoom1']
+req_hists = {
+    "ZH":{"datasets":['p8_ee_ZH_ecm240'],"color":'r'},
+    "ZZ":{"datasets":['p8_ee_ZZ_ecm240'],"color":'g'},
+    "WW":{"datasets":['p8_ee_WW_ecm240'],"color":'b'}
+}
+plot_path = 'outputs/FCCee/higgs/mH-recoil/mumu/plots/'
+
 
 #######################
 # Plot the histograms #
 #######################
-
 print("Plotting...")
-plot_path = 'outputs/FCCee/higgs/mH-recoil/mumu/plots/'
 if not os.path.exists(plot_path):
     os.makedirs(plot_path)
 
-def plots(selections, req_plots, stack, log, formats, path):
+def accumulate(dicts):
+    """
+    Merges an array of dictionaries and adds up the values of common keys.
+    
+    Parameters:
+    dicts (list): A list of dictionaries to be merged.
+    
+    Returns:
+    dict: A dictionary with combined keys and values summed for common keys.
+    """
+    dict = {}
+    
+    for dictionary in dicts:
+        for key, value in dictionary.items():
+            if key in dict:
+                dict[key] += value  # Add values if the key is common
+            else:
+                dict[key] = value  # Otherwise, add the new key-value pair 
+    return dict
+
+def plots(input_dict, req_hists, req_plots, selections, stack, log, formats, path):
     '''
     Batch plot processor
     '''
     for sel in selections:
         print('_________________________________________________________________')
         print('---------------------','Selection:', sel ,'---------------------')
-        hists = selection_dictionary[sel]
+
+        #Get hist array for different backgrounds
+        label_list = []
+        dataset_list = []
+        color_list = []
+        hist_list = []
+        for key in req_hists :
+            label = key
+            datasets = req_hists[key]['datasets']
+            color = req_hists[key]['color']
+            hists = []
+            for i in datasets:
+                hist = input_dict[i]['histograms'][sel]
+                hists.append(hist)
+            label_list.append(label)
+            dataset_list.append(datasets)
+            color_list.append(color)
+            hist_list.append(accumulate(hists))
+
         plot_path_selection = path+sel+'/'
         if not os.path.exists(plot_path_selection):
             os.makedirs(plot_path_selection)
+            
         for hist_name in req_plots:
-            hist = hists[hist_name]
+            hist = [hists[hist_name] for hists in hist_list]
+            
             print(hist_name, ' : ', props[hist_name].title)
             print('---------------------------------------------------------------')
             for log_mode in log :
                 for stack_mode in stack:
+                    fig, ax = plt.subplots(figsize=(8,8))
                     makeplot(
+                        fig=fig,
+                        ax=ax,
                         hist=hist,
                         name=props[hist_name].name,
                         title=props[hist_name].title,
+                        label=label_list,
                         xlabel=props[hist_name].xlabel,
                         ylabel=props[hist_name].ylabel,
                         bins=props[hist_name].bins,
@@ -78,24 +129,25 @@ def plots(selections, req_plots, stack, log, formats, path):
                         xmax=props[hist_name].xmax,
                         log=log_mode,
                         stack=stack_mode,
-                        color=props[hist_name].color,
+                        # color=props[hist_name].color,
+                        color=color_list,
                         histtype=props[hist_name].histtype,
                         formats=formats, #is an array
                         path=plot_path_selection
                     )
+                    plt.close()
             print('-------------------------------------------------------------------')
         print('_____________________________________________________________________\n')
 
-def makeplot(hist, name, title, xlabel, ylabel, bins, xmin, xmax, log, stack, color, histtype, formats, path):
+def makeplot(fig, ax, hist, name, title, label, xlabel, ylabel, bins, xmin, xmax, log, stack, color, histtype, formats, path):
     '''
     Makes a single kinematic plot
     '''
-    fig, ax = plt.subplots(figsize=(8,8))
     hep.histplot(
         hist,
         yerr=0,
         histtype=histtype,
-        label=title,
+        label=label,
         color=color,
         alpha=0.8,
         stack=stack,
@@ -137,8 +189,8 @@ def makeplot(hist, name, title, xlabel, ylabel, bins, xmin, xmax, log, stack, co
         full_name = path+filename
         fig.savefig(full_name,dpi=240);
         print(filename, " saved at ", path)
-    plt.close()
 
-
-
-plots(selections, req_plots, stack, log, formats, plot_path)
+###############################
+# Call the plotting functions #
+###############################
+plots(input, req_hists, req_plots, selections, stack, log, formats, plot_path)
