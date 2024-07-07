@@ -10,6 +10,4 @@ Welcome to COFFEA-FCC Examples!
    :maxdepth: 2
    :caption: Contents:
 
-   some-feature.md
-   another-feature.md
-   The-Sopranos.md
+   mHrecoil.md
