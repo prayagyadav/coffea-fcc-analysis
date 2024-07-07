@@ -13,7 +13,8 @@ print("Loading coffea files...")
 input_path = "outputs/FCCee/higgs/mH-recoil/mumu/"
 filename = "mHrecoil_mumu.coffea"
 input = load(input_path+filename)
-key = "p8_ee_ZZ_ecm240"
+key = "p8_ee_ZH_ecm240"
+dataset_keys = ["p8_ee_ZH_ecm240","p8_ee_ZZ_ecm240","p8_ee_WW_ecm240"]
 selection_dictionary = input[key]['histograms']
 
 ###################
