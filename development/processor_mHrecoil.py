@@ -50,6 +50,7 @@ class mHrecoil(processor.ProcessorABC):
         
         # Filter out any event with no reconstructed particles
         Recon = events['ReconstructedParticles/ReconstructedParticles.energy']
+        cut.add('No cuts', ak.all(Recon > 0, axis=1))
         useful_events = events[ak.num(Recon) > 0]
         
         
@@ -60,7 +61,7 @@ class mHrecoil(processor.ProcessorABC):
         Reco_pz = useful_events['ReconstructedParticles/ReconstructedParticles.momentum.z'].compute()
         Reco_q = useful_events['ReconstructedParticles/ReconstructedParticles.charge'].compute()
         Reco_mass = useful_events['ReconstructedParticles/ReconstructedParticles.mass'].compute()
-        cut.add('At least one Reconstructed Particle', ak.all(Reco_E > 0, axis=1))
+        cut.add('At least one Reco Particle', ak.all(Reco_E > 0, axis=1))
 
         # Generate Muon Attributes
         Muon_index = useful_events['Muon#0/Muon#0.index'].compute()
@@ -112,8 +113,8 @@ class mHrecoil(processor.ProcessorABC):
         cut.add('80 < $M_Z$ < 100',zmassmask)
 
         #Prepare cutflows
-        sel0_list = ['At least one Reconstructed Particle', 'Muon $p_T$ > 10 [GeV]', '$N_Z$', 'Opp charge muons' ]
-        sel1_list = ['At least one Reconstructed Particle', 'Muon $p_T$ > 10 [GeV]', '$N_Z$', 'Opp charge muons', '80 < $M_Z$ < 100']
+        sel0_list = ['At least one Reco Particle', 'Muon $p_T$ > 10 [GeV]', '$N_Z$', 'Opp charge muons' ]
+        sel1_list = ['At least one Reco Particle', 'Muon $p_T$ > 10 [GeV]', '$N_Z$', 'Opp charge muons', '80 < $M_Z$ < 100']
         sel0 = cut.cutflow(*sel0_list)
         sel1 = cut.cutflow(*sel1_list)
 

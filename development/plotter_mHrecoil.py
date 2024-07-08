@@ -5,6 +5,7 @@ import mplhep as hep
 import os
 import numpy as np
 import pandas as pd
+import  collections
 
 
 #########################
@@ -76,6 +77,65 @@ def accumulate(dicts):
             else:
                 dict[key] = value  # Otherwise, add the new key-value pair 
     return dict
+
+def get_cutflow_props(object_list):
+    '''
+    Takes in a list of cutflow objects and returns the sum of their component arrays
+    '''
+    onecut_list = []
+    cutflow_list = []
+    labels_list = object_list[0].result().labels
+    nevonecut_list = []
+    nevcutflow_list = []
+    for object in object_list:
+        res = object.result()
+        if res.labels == labels_list :
+            nevonecut_list.append(np.array(res.nevonecut))
+            nevcutflow_list.append(np.array(res.nevcutflow))
+            onecut_hist, cutflow_hist,l = object.yieldhist() 
+            onecut_list.append(onecut_hist)
+            cutflow_list.append(cutflow_hist)
+        else :
+            raise "The labels of cutflow objects do not match."
+    nevonecut = sum(nevonecut_list)
+    nevcutflow = sum(nevcutflow_list)
+    onecut = sum(onecut_list)
+    cutflow = sum(cutflow_list)
+    c = collections.namedtuple('Cutflow',['labels','onecut','nevonecut','cutflow','nevcutflow'])
+    return c(labels_list, onecut, nevonecut, cutflow, nevcutflow)
+        
+
+def cutflow(input_dict, req_hists, selections, stack, log, formats, path):
+    '''
+    Create cutflow and yield plots
+    '''
+    print('___________________________________________________________________')
+    print('_____________________________Cutflows______________________________')
+    for sel in selections:
+        print('___________________________________________________________________')
+        print('------------------------','Selection:', sel ,'--------------------------')
+        # To create the yield summary
+        for key in req_hists.keys():
+            datasets = req_hists[key]['datasets']
+            cutflow_object_list = []
+            print('-------------------------------------------------------------------')
+            print(f"Key: {key}            Sample:{datasets} ")
+            print('-------------------------------------------------------------------')
+            for i in datasets:
+                object = input_dict[i]['cutflow'][sel]
+                cutflow_object_list.append(object)
+                object.print()
+            cutflow = get_cutflow_props(cutflow_object_list)
+            print(cutflow.labels)
+            
+
+        
+        print('-------------------------------------------------------------------')
+        #To create the cutflow plots
+        print('-------------------------------------------------------------------')
+        print('_____________________________________________________________________\n')
+    
+    pass
 
 def plots(input_dict, req_hists, req_plots, selections, stack, log, formats, path):
     '''
@@ -193,4 +253,5 @@ def makeplot(fig, ax, hist, name, title, label, xlabel, ylabel, bins, xmin, xmax
 ###############################
 # Call the plotting functions #
 ###############################
-plots(input, req_hists, req_plots, selections, stack, log, formats, plot_path)
+cutflow(input, req_hists, selections, stack, log, formats, plot_path)
+# plots(input, req_hists, req_plots, selections, stack, log, formats, plot_path)
