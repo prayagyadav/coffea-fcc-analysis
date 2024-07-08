@@ -50,7 +50,7 @@ class mHrecoil(processor.ProcessorABC):
         
         # Filter out any event with no reconstructed particles
         Recon = events['ReconstructedParticles/ReconstructedParticles.energy']
-        cut.add('No cuts', ak.all(Recon > 0, axis=1))
+        raw_nevents = dak.sum(dak.num(Recon, axis = 1))
         useful_events = events[ak.num(Recon) > 0]
         
         
@@ -149,6 +149,9 @@ class mHrecoil(processor.ProcessorABC):
             'cutflow': { #cutflow objects
                 'sel0': sel0,
                 'sel1': sel1
+            },
+            'other':{
+                'raw_nevents':raw_nevents
             }
         }
 
