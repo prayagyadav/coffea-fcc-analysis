@@ -89,7 +89,7 @@ class mHrecoil(processor.ProcessorABC):
         # Selection 0 : Only one Z candidate in an event
         di_muon = di_muon[ak.num(di_muon) == 1]
         di_muon_mass = ak.flatten(di_muon.mass)
-        cut.add('$N_Z$',ak.num(di_muon) == 1)
+        cut.add('$N_Z$',ak.num(Muon) == 2 ) #Having one Z candidate is same as having exactly two muons in an event
         # di_muon_mass = ak.Array([i[0] for i in ak.sort(di_muon.mass, ascending=False)])
 
         # Choose dimuon which is made up of two oppositely charged muons
