@@ -50,7 +50,7 @@ class mHrecoil(processor.ProcessorABC):
         
         # Filter out any event with no reconstructed particles
         Recon = events['ReconstructedParticles/ReconstructedParticles.energy']
-        raw_nevents = dak.sum(dak.num(Recon, axis = 1))
+        raw_nevents = dak.num(Recon, axis=0).compute()
         useful_events = events[ak.num(Recon) > 0]
         
         
