@@ -145,10 +145,10 @@ class mHrecoil(processor.ProcessorABC):
                 'Recoilm_zoom6' : hist.Hist.new.Regular(100,130.3,132.5).Double().fill(ak.flatten(Recoil_sel1.mass))
                 }
             },
-            # 'cutflow': { #cutflow objects
-            #     'sel0': sel0,
-            #     'sel1': sel1
-            # }
+            'cutflow': { #cutflow objects
+                'sel0': sel0,
+                'sel1': sel1
+            }
         }
 
         return Output
