@@ -17,11 +17,12 @@ def index_mask(input_array, index_array):
     '''
     This function matches the given attribute of ReconstructedParticles (for example energy) to the particle index (for example Muon or Electron)
     '''
-    input_array = input_array.compute()
-    index_array = index_array.compute()
+    # input_array = input_array.compute()
+    # index_array = index_array.compute()
     if len(input_array) != len(index_array) :
-        raise Exception('Length of Input_array and index_array does not match!')
-    counts = len(ak.count(input_array, axis = 1))
+        raise Exception(f'Length of input_array({len(input_array)}) and index_array({len(index_array)}) does not match!')
+    counts = len(input_array)
+    
     @numba.jit
     def numba_wrap(input_array, index_array,counts):
         output_array = []
@@ -31,8 +32,7 @@ def index_mask(input_array, index_array):
             output_array.append([reco_list[i] for i in  event_mask])
         return output_array
     out = ak.Array(numba_wrap(input_array,index_array,counts))
-    # parts = ak.num(out, axis=0)
-    # return dak.from_awkward(out,npartitions=int(parts))
+    
     return out
 
 
@@ -46,24 +46,24 @@ class mHrecoil(processor.ProcessorABC):
         pass
     def process(self,events):
         # Create a Packed Selection object to get a cutflow later
-        cut = PackedSelection()
+        cuts = PackedSelection()
         
         # Filter out any event with no reconstructed particles
-        Recon = events['ReconstructedParticles/ReconstructedParticles.energy']#.compute()
+        Recon = events['ReconstructedParticles/ReconstructedParticles.energy'].compute()
         useful_events = events[ak.num(Recon) > 0]
         
         
         # Generate Reconstructed Particle Attributes
-        Reco_E = useful_events['ReconstructedParticles/ReconstructedParticles.energy']#.compute()
-        Reco_px = useful_events['ReconstructedParticles/ReconstructedParticles.momentum.x']#.compute()
-        Reco_py = useful_events['ReconstructedParticles/ReconstructedParticles.momentum.y']#.compute()
-        Reco_pz = useful_events['ReconstructedParticles/ReconstructedParticles.momentum.z']#.compute()
-        Reco_q = useful_events['ReconstructedParticles/ReconstructedParticles.charge']#.compute()
-        Reco_mass = useful_events['ReconstructedParticles/ReconstructedParticles.mass']#.compute()
+        Reco_E = useful_events['ReconstructedParticles/ReconstructedParticles.energy'].compute()
+        Reco_px = useful_events['ReconstructedParticles/ReconstructedParticles.momentum.x'].compute()
+        Reco_py = useful_events['ReconstructedParticles/ReconstructedParticles.momentum.y'].compute()
+        Reco_pz = useful_events['ReconstructedParticles/ReconstructedParticles.momentum.z'].compute()
+        Reco_q = useful_events['ReconstructedParticles/ReconstructedParticles.charge'].compute()
+        Reco_mass = useful_events['ReconstructedParticles/ReconstructedParticles.mass'].compute()
         cut.add('At least one Reconstructed Particle', ak.all(Reco_E > 0, axis=1))
 
         # Generate Muon Attributes
-        Muon_index = useful_events['Muon#0/Muon#0.index']#.compute()
+        Muon_index = useful_events['Muon#0/Muon#0.index'].compute()
         Muon_E = index_mask(Reco_E,Muon_index)
         Muon_px = index_mask(Reco_px,Muon_index)
         Muon_py = index_mask(Reco_py,Muon_index)
