@@ -49,7 +49,7 @@ class mHrecoil(processor.ProcessorABC):
         cuts = PackedSelection()
         
         # Filter out any event with no reconstructed particles
-        Recon = events['ReconstructedParticles/ReconstructedParticles.energy'].compute()
+        Recon = events['ReconstructedParticles/ReconstructedParticles.energy']
         useful_events = events[ak.num(Recon) > 0]
         
         
