@@ -105,8 +105,8 @@ class mHrecoil(processor.ProcessorABC):
 
         # Selection 1 : Selection 0 + 80 < M_Z < 100
         zmassmask = (Z_cand.mass > 80) & (Z_cand.mass < 100)
-        Z_cand_sel1 = ak.mask(Z_cand, zmassmask)
-        Recoil_sel1 = ak.mask(Recoil, zmassmask)
+        Z_cand_sel1 = Z_cand[zmassmask]
+        Recoil_sel1 = Recoil[zmassmask]
         zmassmask = ak.fill_none(zmassmask,[False],axis=0) #Replace None values at axis 0 with [False]
         zmassmask = ak.flatten(zmassmask)
         cut.add('80 < $M_Z$ < 100',zmassmask)
