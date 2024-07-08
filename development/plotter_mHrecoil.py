@@ -103,7 +103,24 @@ def get_cutflow_props(object_list):
     cutflow = sum(cutflow_list)
     c = collections.namedtuple('Cutflow',['labels','onecut','nevonecut','cutflow','nevcutflow'])
     return c(labels_list, onecut, nevonecut, cutflow, nevcutflow)
-        
+
+
+def yield_plot(name, title, formats, path):
+    '''
+    Create yield plots
+    '''
+    fig, ax = plt.subplots(figsize=(8,8))
+    ax.text(0.25, 1.02, 'FCC Analyses: FCC Simulation Delphes', fontsize=9, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
+    ax.text(0.92, 1.02, '$\\sqrt{s} = 240GeV$', fontsize=9, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
+    ax.set_title(title,pad=25,  fontsize= "15", color="#192655")
+    for format in formats :
+        filename = name+'.'+format
+        full_name = path+filename
+        fig.savefig(full_name,dpi=240);
+        print(filename, " saved at ", path)
+    
+    
+    
 
 def cutflow(input_dict, req_hists, selections, stack, log, formats, path):
     '''
@@ -114,6 +131,8 @@ def cutflow(input_dict, req_hists, selections, stack, log, formats, path):
     for sel in selections:
         print('___________________________________________________________________')
         print('------------------------','Selection:', sel ,'--------------------------')
+
+        cutflow_by_key = []
         # To create the yield summary
         for key in req_hists.keys():
             datasets = req_hists[key]['datasets']
@@ -126,16 +145,54 @@ def cutflow(input_dict, req_hists, selections, stack, log, formats, path):
                 cutflow_object_list.append(object)
                 object.print()
             cutflow = get_cutflow_props(cutflow_object_list)
-            print(cutflow.labels)
-            
+            cutflow_by_key.append(cutflow) 
 
-        
-        print('-------------------------------------------------------------------')
+        hists = [cutflow_object.cutflow for cutflow_object in cutflow_by_key]
+        ncuts = len(cutflow_by_key[0].labels)
+        xticks = np.arange(ncuts)
+        # print('xticks', xticks)
+        color_list = [req_hists[key]['color'] for key in req_hists.keys()]
+        plot_path_selection = path+sel+'/'
+        if not os.path.exists(plot_path_selection):
+            os.makedirs(plot_path_selection)
+
         #To create the cutflow plots
         print('-------------------------------------------------------------------')
+        for log_mode in log:
+            for stack_mode in stack:
+                fig, ax = plt.subplots(figsize=(8,8))
+                makeplot(
+                    fig=fig,
+                    ax=ax,
+                    hist=hists,
+                    name='Cutflow',
+                    title=sel+' Cutflow',
+                    label=req_hists.keys(),
+                    xlabel='Cut Order',
+                    ylabel='Events',
+                    bins=len(xticks)+1,
+                    xmin=xticks[0],
+                    xmax=xticks[-1],
+                    log=log_mode,
+                    stack=stack_mode,
+                    # color=props[hist_name].color,
+                    color=color_list,
+                    histtype='fill',
+                    formats=formats, #is an array
+                    path=plot_path_selection,
+                    # xticks = xticks,
+                    cutflow_mode=True
+                )
+                plt.close()
+        yield_plot(
+            name='Yield',
+            title=f'{sel} Yield',
+            formats=formats,
+            path=plot_path_selection
+        )
+        print('-------------------------------------------------------------------')
         print('_____________________________________________________________________\n')
-    
-    pass
+        
 
 def plots(input_dict, req_hists, req_plots, selections, stack, log, formats, path):
     '''
@@ -199,7 +256,7 @@ def plots(input_dict, req_hists, req_plots, selections, stack, log, formats, pat
             print('-------------------------------------------------------------------')
         print('_____________________________________________________________________\n')
 
-def makeplot(fig, ax, hist, name, title, label, xlabel, ylabel, bins, xmin, xmax, log, stack, color, histtype, formats, path):
+def makeplot(fig, ax, hist, name, title, label, xlabel, ylabel, bins, xmin, xmax, log, stack, color, histtype, formats, path, xticks=10, cutflow_mode=False):
     '''
     Makes a single kinematic plot
     '''
@@ -217,17 +274,21 @@ def makeplot(fig, ax, hist, name, title, label, xlabel, ylabel, bins, xmin, xmax
     )
 
     # plt.text("Preliminary",0,0)
-    ax.text(0.20, 1.02, 'FCC Analyses: FCC Simulation Delphes', fontsize=9, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
+    ax.text(0.25, 1.02, 'FCC Analyses: FCC Simulation Delphes', fontsize=9, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
     ax.text(0.92, 1.02, '$\\sqrt{s} = 240GeV$', fontsize=9, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
     #ax.text(0.84,0.54, 'FCCee', fontsize=9, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
     #ax.text(0.84,0.50, 'Sample = p8_ee_ZH_ecm240', fontsize=9, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
 
-    n_xticks = 10
-    per_bin = '/'+str((xmax-xmin)/bins)
-    ax.set_ylabel(ylabel+per_bin+' [GeV]')
+    # n_xticks = 10
+    if  cutflow_mode:
+        ax.set_ylabel(ylabel)
+        # plt.xticks(xticks) #input xticks as an array for  cutflows
+    else:
+        per_bin = '/'+str((xmax-xmin)/bins)
+        ax.set_ylabel(ylabel+per_bin+' [GeV]')
+        plt.xlim([xmin,xmax])
+        plt.xticks(np.linspace(xmin,xmax,xticks+1))
     ax.set_xlabel(xlabel)
-    plt.xlim([xmin,xmax])
-    plt.xticks(np.linspace(xmin,xmax,n_xticks+1))
     
     if log :
         ax.set_yscale('log')
@@ -242,7 +303,7 @@ def makeplot(fig, ax, hist, name, title, label, xlabel, ylabel, bins, xmin, xmax
     
     ax.set_title(title,pad=25,  fontsize= "15", color="#192655")
     # ax.axvline(91,label="91 GeV", color='r', linestyle='--')
-    fig.legend(prop={"size":10},loc= (0.64,0.64) )
+    fig.legend(prop={"size":10},loc= (0.74,0.74) )
 
     for format in formats :
         filename = name+'_'+log_mode_text+'_'+stack_mode_text+'.'+format
@@ -254,4 +315,4 @@ def makeplot(fig, ax, hist, name, title, label, xlabel, ylabel, bins, xmin, xmax
 # Call the plotting functions #
 ###############################
 cutflow(input, req_hists, selections, stack, log, formats, plot_path)
-# plots(input, req_hists, req_plots, selections, stack, log, formats, plot_path)
+plots(input, req_hists, req_plots, selections, stack, log, formats, plot_path)
