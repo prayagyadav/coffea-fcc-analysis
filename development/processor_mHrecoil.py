@@ -1,5 +1,6 @@
 from coffea.nanoevents import BaseSchema, NanoEventsFactory
 from coffea import processor
+from coffea.analysis_tools import PackedSelection
 import dask_awkward as dak
 import dask
 import awkward as ak
@@ -44,10 +45,14 @@ class mHrecoil(processor.ProcessorABC):
     def __init__(self):
         pass
     def process(self,events):
+        # Create a Packed Selection object to get a cutflow later
+        cuts = PackedSelection()
+        
         # Filter out any event with no reconstructed particles
         Recon = events['ReconstructedParticles/ReconstructedParticles.energy']#.compute()
         useful_events = events[ak.num(Recon) > 0]
-
+        
+        
         # Generate Reconstructed Particle Attributes
         Reco_E = useful_events['ReconstructedParticles/ReconstructedParticles.energy']#.compute()
         Reco_px = useful_events['ReconstructedParticles/ReconstructedParticles.momentum.x']#.compute()
@@ -55,6 +60,7 @@ class mHrecoil(processor.ProcessorABC):
         Reco_pz = useful_events['ReconstructedParticles/ReconstructedParticles.momentum.z']#.compute()
         Reco_q = useful_events['ReconstructedParticles/ReconstructedParticles.charge']#.compute()
         Reco_mass = useful_events['ReconstructedParticles/ReconstructedParticles.mass']#.compute()
+        cut.add('At least one Reconstructed Particle', ak.all(Reco_E > 0, axis=1))
 
         # Generate Muon Attributes
         Muon_index = useful_events['Muon#0/Muon#0.index']#.compute()
@@ -68,6 +74,11 @@ class mHrecoil(processor.ProcessorABC):
         # Create Array of Muon Lorentz Vector 
         Muon = ak.zip({"px":Muon_px,"py":Muon_py,"pz":Muon_pz,"E":Muon_E,"q":Muon_q,}, with_name="Momentum4D")
 
+        # Muon pt > 10
+        Muon_pt_cut = ak.all(Muon.pt > 10, axis=1)
+        Muon = Muon[Muon_pt_cut]
+        cut.add('Muon $p_T$ > 10 [GeV]',Muon_pt_cut)
+
         # Produce all the combinations of Muon Pairs possible within an event
         combs = ak.combinations(Muon,2)
 
@@ -78,6 +89,7 @@ class mHrecoil(processor.ProcessorABC):
         # Selection 0 : Only one Z candidate in an event
         di_muon = di_muon[ak.num(di_muon) == 1]
         di_muon_mass = ak.flatten(di_muon.mass)
+        cut.add('$N_Z$',ak.num(di_muon) == 1)
         # di_muon_mass = ak.Array([i[0] for i in ak.sort(di_muon.mass, ascending=False)])
 
         # Choose dimuon which is made up of two oppositely charged muons
@@ -85,6 +97,7 @@ class mHrecoil(processor.ProcessorABC):
         q_sum_array = q_sum[ak.num(q_sum) == 1]
         q_sum_mask = ak.all(q_sum_array == 0, axis=1)
         Z_cand = di_muon[q_sum_mask]
+        cut.add('Opp charge muons',q_sum_mask)
 
         #Recoil Calculation
         ecm = 240 #GeV # com energy
@@ -95,6 +108,13 @@ class mHrecoil(processor.ProcessorABC):
         zmassmask = (Z_cand.mass > 80) & (Z_cand.mass < 100)
         Z_cand_sel1 = Z_cand[zmassmask]
         Recoil_sel1 = Recoil[zmassmask]
+        cut.add('80 < $M_Z$ < 100',zmassmask)
+
+        #Prepare cutflows
+        sel0_list = ['At least one Reconstructed Particle', 'Muon $p_T$ > 10 [GeV]', '$N_Z$', 'Opp charge muons' ]
+        sel1_list = ['At least one Reconstructed Particle', 'Muon $p_T$ > 10 [GeV]', '$N_Z$', 'Opp charge muons', '80 < $M_Z$ < 100']
+        sel0 = cut.cutflow(*sel0_list)
+        sel1 = cut.cutflow(*sel1_list)
 
         #Prepare output
         Output = {
@@ -123,6 +143,10 @@ class mHrecoil(processor.ProcessorABC):
                 'Recoilm_zoom5' : hist.Hist.new.Regular(2000,120,140).Double().fill(ak.flatten(Recoil_sel1.mass)),
                 'Recoilm_zoom6' : hist.Hist.new.Regular(100,130.3,132.5).Double().fill(ak.flatten(Recoil_sel1.mass))
                 }
+            },
+            'cutflow': { #cutflow objects
+                'sel0': sel0,
+                'sel1': sel1
             }
         }
 
