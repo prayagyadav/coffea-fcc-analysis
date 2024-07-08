@@ -76,7 +76,7 @@ class mHrecoil(processor.ProcessorABC):
 
         # Muon pt > 10
         Muon_pt_cut = ak.all(Muon.pt > 10, axis=1)
-        Muon = Muon[Muon_pt_cut]
+        Muon = ak.mask(Muon, Muon_pt_cut) #ak.mask to preserve number of events
         cut.add('Muon $p_T$ > 10 [GeV]',Muon_pt_cut)
 
         # Produce all the combinations of Muon Pairs possible within an event
@@ -87,16 +87,15 @@ class mHrecoil(processor.ProcessorABC):
         di_muon = mu1 + mu2
 
         # Selection 0 : Only one Z candidate in an event
-        di_muon = di_muon[ak.num(di_muon) == 1]
+        di_muon = ak.mask(di_muon, ak.num(di_muon) == 1)
         di_muon_mass = ak.flatten(di_muon.mass)
-        cut.add('$N_Z$',ak.num(Muon) == 2 ) #Having one Z candidate is same as having exactly two muons in an event
-        # di_muon_mass = ak.Array([i[0] for i in ak.sort(di_muon.mass, ascending=False)])
+        cut.add('$N_Z$',ak.num(Muon) == 2 ) #Having one Z candidate is same as having exactly two muons in an even
 
         # Choose dimuon which is made up of two oppositely charged muons
         q_sum = mu1.q + mu2.q
-        q_sum_array = q_sum[ak.num(q_sum) == 1]
+        q_sum_array = ak.mask(q_sum, ak.num(q_sum) == 1)
         q_sum_mask = ak.all(q_sum_array == 0, axis=1)
-        Z_cand = di_muon[q_sum_mask]
+        Z_cand = ak.mask(di_muon , q_sum_mask)
         cut.add('Opp charge muons',q_sum_mask)
 
         #Recoil Calculation
@@ -106,8 +105,10 @@ class mHrecoil(processor.ProcessorABC):
 
         # Selection 1 : Selection 0 + 80 < M_Z < 100
         zmassmask = (Z_cand.mass > 80) & (Z_cand.mass < 100)
-        Z_cand_sel1 = Z_cand[zmassmask]
-        Recoil_sel1 = Recoil[zmassmask]
+        Z_cand_sel1 = ak.mask(Z_cand, zmassmask)
+        Recoil_sel1 = ak.mask(Recoil, zmassmask)
+        zmassmask = ak.fill_none(zmassmask,[False],axis=0) #Replace None values at axis 0 with [False]
+        zmassmask = ak.flatten(zmassmask)
         cut.add('80 < $M_Z$ < 100',zmassmask)
 
         #Prepare cutflows
