@@ -46,7 +46,7 @@ class mHrecoil(processor.ProcessorABC):
         pass
     def process(self,events):
         # Create a Packed Selection object to get a cutflow later
-        cuts = PackedSelection()
+        cut = PackedSelection()
         
         # Filter out any event with no reconstructed particles
         Recon = events['ReconstructedParticles/ReconstructedParticles.energy']
