@@ -31,7 +31,7 @@ def index_mask(input_array, index_array):
             output_array.append([reco_list[i] for i in  event_mask])
         return output_array
     out = ak.Array(numba_wrap(input_array,index_array,counts))
-    parts = ak.num(out, axis=0)
+    # parts = ak.num(out, axis=0)
     # return dak.from_awkward(out,npartitions=int(parts))
     return out
 
