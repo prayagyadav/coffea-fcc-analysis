@@ -343,4 +343,4 @@ def makeplot(fig, ax, hist, name, title, label, xlabel, ylabel, bins, xmin, xmax
 # Call the plotting functions #
 ###############################
 cutflow(input, req_hists, selections, stack, log, formats, plot_path)
-# plots(input, req_hists, req_plots, selections, stack, log, formats, plot_path)
+plots(input, req_hists, req_plots, selections, stack, log, formats, plot_path)
