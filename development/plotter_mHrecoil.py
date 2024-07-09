@@ -34,6 +34,11 @@ plot_props = {
 }
 props = pd.DataFrame(plot_props)
 
+cross_sections = { # Taken as is from https://github.com/HEP-FCC/FCCAnalyses/blob/master/examples/FCCee/higgs/mH-recoil/histmaker_mumu.py#L7
+    'p8_ee_WW_ecm240': 0.25792,
+    'p8_ee_ZZ_ecm240': 2 * 1.35899 * 0.034 * 0.152,
+    'p8_ee_ZH_ecm240': 0.201868 * 0.034
+}
 
 ##################################
 # Choose the required plots here #
@@ -49,7 +54,11 @@ req_hists = {
     "WW":{"datasets":['p8_ee_WW_ecm240'],"color":'b'}
 }
 plot_path = 'outputs/FCCee/higgs/mH-recoil/mumu/plots/'
-
+intLumi        = 5.0e+06 #in pb-1
+ana_tex        = 'e^{+}e^{-} \\rightarrow ZH \\rightarrow \\mu^{+}\\mu^{-} + X'
+delphesVersion = '3.4.2'
+energy         = 240.0 #in GeV
+collider       = 'FCC-ee'
 
 #######################
 # Plot the histograms #
@@ -105,21 +114,37 @@ def get_cutflow_props(object_list):
     return c(labels_list, onecut, nevonecut, cutflow, nevcutflow)
 
 
-def yield_plot(name, title, formats, path):
+def yield_plot(name, title, keys, cutflow_obs, formats, path):
     '''
     Create yield plots
     '''
     fig, ax = plt.subplots(figsize=(8,8))
-    ax.text(0.25, 1.02, 'FCC Analyses: FCC Simulation Delphes', fontsize=9, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
-    ax.text(0.92, 1.02, '$\\sqrt{s} = 240GeV$', fontsize=9, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
+    ax.text(0.25, 1.02, 'FCC Analyses: FCC Simulation Delphes', fontsize=10, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
+    ax.text(0.92, 1.02, '$\\sqrt{s} = '+str(energy)+' GeV$', fontsize=10, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
+    ax.text(0.10, 0.90, collider, fontsize=12, horizontalalignment='left', verticalalignment='center', transform=ax.transAxes)
+    ax.text(0.10, 0.80,'Delphes Version: '+delphesVersion, fontsize=12, horizontalalignment='left', verticalalignment='center', transform=ax.transAxes)
+    ax.text(0.10, 0.70, 'Signal : $'+ana_tex+'$', fontsize=12, horizontalalignment='left', verticalalignment='center', transform=ax.transAxes)
+    ax.text(0.10, 0.60, '$L = '+str(intLumi/1e6)+' ab^{-1}$', fontsize=12, horizontalalignment='left', verticalalignment='center', transform=ax.transAxes)
+
+    ax.text(0.10, 0.50, 'Sample', weight='bold', fontsize=12, horizontalalignment='left', verticalalignment='center', transform=ax.transAxes)
+    ax.text(0.40, 0.50, 'Yield', weight='bold', fontsize=12, horizontalalignment='left', verticalalignment='center', transform=ax.transAxes)
+    ax.text(0.70, 0.50, 'RawMC', weight='bold', fontsize=12, horizontalalignment='left', verticalalignment='center', transform=ax.transAxes)
+
+    linespacing = 0.05
+    for i in range(len(keys)):
+        datasets = req_hists[list(keys)[i]]['datasets'] 
+        color = req_hists[list(keys)[i]]['color']
+        ax.text(0.10, 0.40-linespacing, datasets, fontsize=10, color=color,horizontalalignment='left', verticalalignment='center', transform=ax.transAxes)
+        ax.text(0.40, 0.40-linespacing, cutflow_obs[i].nevcutflow[-1], color=color,fontsize=12, horizontalalignment='left', verticalalignment='center', transform=ax.transAxes)
+        ax.text(0.70, 0.40-linespacing, cutflow_obs[i].nevcutflow[0], color=color, fontsize=12, horizontalalignment='left', verticalalignment='center', transform=ax.transAxes)
+        linespacing -= 0.05
+
     ax.set_title(title,pad=25,  fontsize= "15", color="#192655")
     for format in formats :
         filename = name+'.'+format
         full_name = path+filename
         fig.savefig(full_name,dpi=240);
         print(filename, " saved at ", path)
-    
-    
     
 
 def cutflow(input_dict, req_hists, selections, stack, log, formats, path):
@@ -187,6 +212,9 @@ def cutflow(input_dict, req_hists, selections, stack, log, formats, path):
         yield_plot(
             name='Yield',
             title=f'{sel} Yield',
+            keys=req_hists.keys(),
+            cutflow_obs=cutflow_by_key,
+            # rawstats= raw_nev,
             formats=formats,
             path=plot_path_selection
         )
@@ -315,4 +343,4 @@ def makeplot(fig, ax, hist, name, title, label, xlabel, ylabel, bins, xmin, xmax
 # Call the plotting functions #
 ###############################
 cutflow(input, req_hists, selections, stack, log, formats, plot_path)
-plots(input, req_hists, req_plots, selections, stack, log, formats, plot_path)
+# plots(input, req_hists, req_plots, selections, stack, log, formats, plot_path)

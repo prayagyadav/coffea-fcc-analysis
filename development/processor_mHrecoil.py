@@ -47,11 +47,12 @@ class mHrecoil(processor.ProcessorABC):
     def process(self,events):
         # Create a Packed Selection object to get a cutflow later
         cut = PackedSelection()
+        Recon = events['ReconstructedParticles/ReconstructedParticles.energy']
+        cut.add('No cut', ak.all(Recon.compute() > 0, axis=1))
         
         # Filter out any event with no reconstructed particles
-        Recon = events['ReconstructedParticles/ReconstructedParticles.energy']
-        raw_nevents = dak.num(Recon, axis=0).compute()
-        useful_events = events[ak.num(Recon) > 0]
+        useful_events = ak.mask(events,ak.num(Recon) > 0) #ak.mask preserves array length
+        # useful_events = events[ak.num(Recon) > 0]
         
         
         # Generate Reconstructed Particle Attributes
