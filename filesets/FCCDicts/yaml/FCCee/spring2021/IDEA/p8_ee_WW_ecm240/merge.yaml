@@ -1,0 +1,210 @@
+merge:
+  nbad: 0
+  ndone: 100
+  nevents: 10000000
+  outdir: /eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/
+  outfiles:
+  - - events_002446962.root
+    - 100000
+  - - events_003660780.root
+    - 100000
+  - - events_003871346.root
+    - 100000
+  - - events_006111023.root
+    - 100000
+  - - events_006917088.root
+    - 100000
+  - - events_007700274.root
+    - 100000
+  - - events_009698995.root
+    - 100000
+  - - events_014553223.root
+    - 100000
+  - - events_015203393.root
+    - 100000
+  - - events_016976279.root
+    - 100000
+  - - events_018665926.root
+    - 100000
+  - - events_018713241.root
+    - 100000
+  - - events_019837840.root
+    - 100000
+  - - events_023471508.root
+    - 100000
+  - - events_026468529.root
+    - 100000
+  - - events_027476245.root
+    - 100000
+  - - events_028807086.root
+    - 100000
+  - - events_028914696.root
+    - 100000
+  - - events_030994453.root
+    - 100000
+  - - events_031800883.root
+    - 100000
+  - - events_032306830.root
+    - 100000
+  - - events_036566822.root
+    - 100000
+  - - events_039767239.root
+    - 100000
+  - - events_040168535.root
+    - 100000
+  - - events_041868503.root
+    - 100000
+  - - events_042960849.root
+    - 100000
+  - - events_045685798.root
+    - 100000
+  - - events_046174706.root
+    - 100000
+  - - events_046854584.root
+    - 100000
+  - - events_049408485.root
+    - 100000
+  - - events_050421846.root
+    - 100000
+  - - events_051087029.root
+    - 100000
+  - - events_051591218.root
+    - 100000
+  - - events_057156831.root
+    - 100000
+  - - events_057603313.root
+    - 100000
+  - - events_057691795.root
+    - 100000
+  - - events_059017045.root
+    - 100000
+  - - events_063234923.root
+    - 100000
+  - - events_065752700.root
+    - 100000
+  - - events_070028470.root
+    - 100000
+  - - events_070650542.root
+    - 100000
+  - - events_072894802.root
+    - 100000
+  - - events_073177487.root
+    - 100000
+  - - events_073916792.root
+    - 100000
+  - - events_074962718.root
+    - 100000
+  - - events_076184375.root
+    - 100000
+  - - events_078174375.root
+    - 100000
+  - - events_081552316.root
+    - 100000
+  - - events_087150860.root
+    - 100000
+  - - events_087671235.root
+    - 100000
+  - - events_089415155.root
+    - 100000
+  - - events_091450747.root
+    - 100000
+  - - events_092495082.root
+    - 100000
+  - - events_092867114.root
+    - 100000
+  - - events_097942957.root
+    - 100000
+  - - events_098166420.root
+    - 100000
+  - - events_099021105.root
+    - 100000
+  - - events_099496273.root
+    - 100000
+  - - events_100921120.root
+    - 100000
+  - - events_102455390.root
+    - 100000
+  - - events_107303238.root
+    - 100000
+  - - events_114536991.root
+    - 100000
+  - - events_117162435.root
+    - 100000
+  - - events_117279317.root
+    - 100000
+  - - events_117957069.root
+    - 100000
+  - - events_120872649.root
+    - 100000
+  - - events_123206281.root
+    - 100000
+  - - events_125053404.root
+    - 100000
+  - - events_125534642.root
+    - 100000
+  - - events_126106893.root
+    - 100000
+  - - events_128668835.root
+    - 100000
+  - - events_129185502.root
+    - 100000
+  - - events_129688060.root
+    - 100000
+  - - events_135505080.root
+    - 100000
+  - - events_137778729.root
+    - 100000
+  - - events_138292355.root
+    - 100000
+  - - events_138615229.root
+    - 100000
+  - - events_139836673.root
+    - 100000
+  - - events_141581993.root
+    - 100000
+  - - events_144371500.root
+    - 100000
+  - - events_150954019.root
+    - 100000
+  - - events_152392633.root
+    - 100000
+  - - events_152648054.root
+    - 100000
+  - - events_154345214.root
+    - 100000
+  - - events_154544012.root
+    - 100000
+  - - events_154735138.root
+    - 100000
+  - - events_154791463.root
+    - 100000
+  - - events_156874587.root
+    - 100000
+  - - events_160833268.root
+    - 100000
+  - - events_163860451.root
+    - 100000
+  - - events_165434198.root
+    - 100000
+  - - events_169060068.root
+    - 100000
+  - - events_170422001.root
+    - 100000
+  - - events_172388925.root
+    - 100000
+  - - events_174596427.root
+    - 100000
+  - - events_176012190.root
+    - 100000
+  - - events_176602803.root
+    - 100000
+  - - events_179564968.root
+    - 100000
+  - - events_182184091.root
+    - 100000
+  - - events_193871806.root
+    - 100000
+  outfilesbad: []
+  process: p8_ee_WW_ecm240
+  size: 69209528155
+  sumofweights: 10000000.0
