@@ -50,22 +50,18 @@ class mHrecoil(processor.ProcessorABC):
         Recon = events['ReconstructedParticles/ReconstructedParticles.energy']
         cut.add('No cut', ak.all(Recon.compute() > 0, axis=1))
         
-        # Filter out any event with no reconstructed particles
-        useful_events = ak.mask(events,ak.num(Recon) > 0) #ak.mask preserves array length
-        # useful_events = events[ak.num(Recon) > 0]
-        
-        
-        # Generate Reconstructed Particle Attributes
-        Reco_E = useful_events['ReconstructedParticles/ReconstructedParticles.energy'].compute()
-        Reco_px = useful_events['ReconstructedParticles/ReconstructedParticles.momentum.x'].compute()
-        Reco_py = useful_events['ReconstructedParticles/ReconstructedParticles.momentum.y'].compute()
-        Reco_pz = useful_events['ReconstructedParticles/ReconstructedParticles.momentum.z'].compute()
-        Reco_q = useful_events['ReconstructedParticles/ReconstructedParticles.charge'].compute()
-        Reco_mass = useful_events['ReconstructedParticles/ReconstructedParticles.mass'].compute()
+        # Filter out any event with no reconstructed particles and generate Reconstructed Particle Attributes
+        #ak.mask preserves array length
+        Reco_E = ak.mask(events['ReconstructedParticles/ReconstructedParticles.energy'],ak.num(Recon) > 0).compute()
+        Reco_px = ak.mask(events['ReconstructedParticles/ReconstructedParticles.momentum.x'],ak.num(Recon) > 0).compute()
+        Reco_py = ak.mask(events['ReconstructedParticles/ReconstructedParticles.momentum.y'],ak.num(Recon) > 0).compute()
+        Reco_pz = ak.mask(events['ReconstructedParticles/ReconstructedParticles.momentum.z'],ak.num(Recon) > 0).compute()
+        Reco_q = ak.mask(events['ReconstructedParticles/ReconstructedParticles.charge'],ak.num(Recon) > 0).compute()
+        Reco_mass = ak.mask(events['ReconstructedParticles/ReconstructedParticles.mass'],ak.num(Recon) > 0).compute()
         cut.add('At least one Reco Particle', ak.all(Reco_E > 0, axis=1))
-
+        
         # Generate Muon Attributes
-        Muon_index = useful_events['Muon#0/Muon#0.index'].compute()
+        Muon_index = events['Muon#0/Muon#0.index'].compute()
         Muon_E = index_mask(Reco_E,Muon_index)
         Muon_px = index_mask(Reco_px,Muon_index)
         Muon_py = index_mask(Reco_py,Muon_index)
@@ -114,8 +110,8 @@ class mHrecoil(processor.ProcessorABC):
         cut.add('80 < $M_Z$ < 100',zmassmask)
 
         #Prepare cutflows
-        sel0_list = ['At least one Reco Particle', 'Muon $p_T$ > 10 [GeV]', '$N_Z$', 'Opp charge muons' ]
-        sel1_list = ['At least one Reco Particle', 'Muon $p_T$ > 10 [GeV]', '$N_Z$', 'Opp charge muons', '80 < $M_Z$ < 100']
+        sel0_list = ['No cut','At least one Reco Particle', 'Muon $p_T$ > 10 [GeV]', '$N_Z$', 'Opp charge muons' ]
+        sel1_list = ['No cut','At least one Reco Particle', 'Muon $p_T$ > 10 [GeV]', '$N_Z$', 'Opp charge muons', '80 < $M_Z$ < 100']
         sel0 = cut.cutflow(*sel0_list)
         sel1 = cut.cutflow(*sel1_list)
 
