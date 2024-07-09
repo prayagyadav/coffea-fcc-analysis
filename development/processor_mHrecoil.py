@@ -150,9 +150,6 @@ class mHrecoil(processor.ProcessorABC):
             'cutflow': { #cutflow objects
                 'sel0': sel0,
                 'sel1': sel1
-            },
-            'other':{
-                'raw_nevents':raw_nevents
             }
         }
 
