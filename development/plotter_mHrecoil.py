@@ -67,6 +67,14 @@ print("Plotting...")
 if not os.path.exists(plot_path):
     os.makedirs(plot_path)
 
+def get_xsec_scale(dataset, raw_events, Luminosity):
+    xsec = cross_sections[dataset] #in per picobarn
+    if raw_events > 0:
+        sf = (xsec*Luminosity)/raw_events
+    else :
+        raise 'Raw events less than of equal to zero!'
+    return sf
+
 def accumulate(dicts):
     """
     Merges an array of dictionaries and adds up the values of common keys.
@@ -87,23 +95,28 @@ def accumulate(dicts):
                 dict[key] = value  # Otherwise, add the new key-value pair 
     return dict
 
-def get_cutflow_props(object_list):
+def get_cutflow_props(object_list, **kwargs):
     '''
-    Takes in a list of cutflow objects and returns the sum of their component arrays
+    Takes in a list of cutflow objects and returns the sum of their component arrays after scaling them
     '''
+    if 'scale' in kwargs:
+        scale = kwargs['scale'] #scale should be a list of scale factors corresponding to the objects
+    else :
+        scale =  np.ones(len(object_list))
+
     onecut_list = []
     cutflow_list = []
     labels_list = object_list[0].result().labels
     nevonecut_list = []
     nevcutflow_list = []
-    for object in object_list:
+    for object, sf in zip(object_list, scale):
         res = object.result()
         if res.labels == labels_list :
-            nevonecut_list.append(np.array(res.nevonecut))
-            nevcutflow_list.append(np.array(res.nevcutflow))
+            nevonecut_list.append(sf*np.array(res.nevonecut))
+            nevcutflow_list.append(sf*np.array(res.nevcutflow))
             onecut_hist, cutflow_hist,l = object.yieldhist() 
-            onecut_list.append(onecut_hist)
-            cutflow_list.append(cutflow_hist)
+            onecut_list.append(sf*onecut_hist)
+            cutflow_list.append(sf*cutflow_hist)
         else :
             raise "The labels of cutflow objects do not match."
     nevonecut = sum(nevonecut_list)
@@ -134,9 +147,11 @@ def yield_plot(name, title, keys, cutflow_obs, formats, path):
     for i in range(len(keys)):
         datasets = req_hists[list(keys)[i]]['datasets'] 
         color = req_hists[list(keys)[i]]['color']
+        yield_text = str(round(cutflow_obs[i].nevcutflow[-1],2))
+        rawmc_text = str(round(cutflow_obs[i].nevcutflow[0],2))
         ax.text(0.10, 0.40-linespacing, datasets, fontsize=10, color=color,horizontalalignment='left', verticalalignment='center', transform=ax.transAxes)
-        ax.text(0.40, 0.40-linespacing, cutflow_obs[i].nevcutflow[-1], color=color,fontsize=12, horizontalalignment='left', verticalalignment='center', transform=ax.transAxes)
-        ax.text(0.70, 0.40-linespacing, cutflow_obs[i].nevcutflow[0], color=color, fontsize=12, horizontalalignment='left', verticalalignment='center', transform=ax.transAxes)
+        ax.text(0.40, 0.40-linespacing, yield_text, color=color,fontsize=12, horizontalalignment='left', verticalalignment='center', transform=ax.transAxes)
+        ax.text(0.70, 0.40-linespacing, rawmc_text, color=color, fontsize=12, horizontalalignment='left', verticalalignment='center', transform=ax.transAxes)
         linespacing -= 0.05
 
     ax.set_title(title,pad=25,  fontsize= "15", color="#192655")
@@ -162,6 +177,7 @@ def cutflow(input_dict, req_hists, selections, stack, log, formats, path):
         for key in req_hists.keys():
             datasets = req_hists[key]['datasets']
             cutflow_object_list = []
+            xsec_scale = []
             print('-------------------------------------------------------------------')
             print(f"Key: {key}            Sample:{datasets} ")
             print('-------------------------------------------------------------------')
@@ -169,8 +185,12 @@ def cutflow(input_dict, req_hists, selections, stack, log, formats, path):
                 object = input_dict[i]['cutflow'][sel]
                 cutflow_object_list.append(object)
                 object.print()
-            cutflow = get_cutflow_props(cutflow_object_list)
-            cutflow_by_key.append(cutflow) 
+                Raw_Events = object.result().nevcutflow[0]
+                xsec_scale.append(get_xsec_scale(i, Raw_Events, intLumi))
+            unscaled_cutflow = get_cutflow_props(cutflow_object_list)
+            cutflow = get_cutflow_props(cutflow_object_list, scale=xsec_scale)
+            cutflow_by_key.append(cutflow)
+            print('xsec_scale = ',xsec_scale)
 
         hists = [cutflow_object.cutflow for cutflow_object in cutflow_by_key]
         ncuts = len(cutflow_by_key[0].labels)
@@ -241,8 +261,12 @@ def plots(input_dict, req_hists, req_plots, selections, stack, log, formats, pat
             color = req_hists[key]['color']
             hists = []
             for i in datasets:
+                object = input_dict[i]['cutflow'][sel]
+                Raw_Events = object.result().nevcutflow[0]
+                xsec_scale = get_xsec_scale(i, Raw_Events, intLumi)
                 hist = input_dict[i]['histograms'][sel]
-                hists.append(hist)
+                scaled_hist = { name: xsec_scale*hist for name, hist in hist.items()}
+                hists.append(scaled_hist)
             label_list.append(label)
             dataset_list.append(datasets)
             color_list.append(color)
@@ -286,7 +310,7 @@ def plots(input_dict, req_hists, req_plots, selections, stack, log, formats, pat
 
 def makeplot(fig, ax, hist, name, title, label, xlabel, ylabel, bins, xmin, xmax, log, stack, color, histtype, formats, path, xticks=10, cutflow_mode=False):
     '''
-    Makes a single kinematic plot
+    Makes a single kinematic plot and saves it in various formats
     '''
     hep.histplot(
         hist,
@@ -301,16 +325,13 @@ def makeplot(fig, ax, hist, name, title, label, xlabel, ylabel, bins, xmin, xmax
         ax=ax
     )
 
-    # plt.text("Preliminary",0,0)
     ax.text(0.25, 1.02, 'FCC Analyses: FCC Simulation Delphes', fontsize=9, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
     ax.text(0.92, 1.02, '$\\sqrt{s} = 240GeV$', fontsize=9, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
     #ax.text(0.84,0.54, 'FCCee', fontsize=9, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
     #ax.text(0.84,0.50, 'Sample = p8_ee_ZH_ecm240', fontsize=9, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
 
-    # n_xticks = 10
     if  cutflow_mode:
         ax.set_ylabel(ylabel)
-        # plt.xticks(xticks) #input xticks as an array for  cutflows
     else:
         per_bin = '/'+str((xmax-xmin)/bins)
         ax.set_ylabel(ylabel+per_bin+' [GeV]')
