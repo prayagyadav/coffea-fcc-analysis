@@ -1,4 +1,4 @@
-# COFFEA FCC Analysis
+# COFFEA FCC Analyses
 
 ## Setup
 Start a singularity shell with coffea with
