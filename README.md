@@ -11,7 +11,7 @@ Example Analyses are separated into 4 files:
 - runner_<example_name>.py
 - plotter_<example_name>.py
 
-To run the mHrecoil/mumu example:
+To run the examples/FCCee/higgs/mHrecoil/mumu example:
 Step 0 : Clone this repository
 
 1. Navigate to example folder

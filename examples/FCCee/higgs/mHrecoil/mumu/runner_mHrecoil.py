@@ -45,7 +45,7 @@ if __name__=="__main__":
         Loads the yaml data for filesets
         '''
         onlinesystem_path = '/cvmfs/fcc.cern.ch'
-        localsystem_path = './../filesets'
+        localsystem_path = './../../../../../filesets/'
         path = '/'.join(
             [
              'FCCDicts',
@@ -72,7 +72,7 @@ if __name__=="__main__":
                 raise f'Could not find yaml files at {filesystem_path} .'
             yaml_dict[sample] = dict
         return yaml_dict
-    
+
     def get_fileset(yaml_dict, fraction, skipbadfiles=True, redirector=''):
         output_fileset_dictionary = {}
         print('_________Loading fileset__________')

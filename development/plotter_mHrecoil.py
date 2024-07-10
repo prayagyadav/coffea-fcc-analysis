@@ -39,7 +39,8 @@ props = pd.DataFrame(plot_props)
 #     'p8_ee_ZZ_ecm240': 2 * 1.35899 * 0.034 * 0.152,
 #     'p8_ee_ZH_ecm240': 0.201868 * 0.034
 # }
-cross_sections = { # Taken as is from FCC events catalogue at https://fcc-physics-events.web.cern.ch/FCCee/spring2021/Delphesevents_IDEA.php
+
+cross_sections = {#in pb-1 # Taken as is from FCC events catalogue at https://fcc-physics-events.web.cern.ch/FCCee/spring2021/Delphesevents_IDEA.php
     'p8_ee_WW_ecm240': 16.4385,
     'p8_ee_ZZ_ecm240': 1.35899,
     'p8_ee_ZH_ecm240': 0.201868
@@ -83,15 +84,15 @@ def get_xsec_scale(dataset, raw_events, Luminosity):
 def accumulate(dicts):
     """
     Merges an array of dictionaries and adds up the values of common keys.
-    
+
     Parameters:
     dicts (list): A list of dictionaries to be merged.
-    
+
     Returns:
     dict: A dictionary with combined keys and values summed for common keys.
     """
     dict = {}
-    
+
     for dictionary in dicts:
         for key, value in dictionary.items():
             if key in dict:
@@ -165,7 +166,7 @@ def yield_plot(name, title, keys, cutflow_obs, formats, path):
         full_name = path+filename
         fig.savefig(full_name,dpi=240);
         print(filename, " saved at ", path)
-    
+
 
 def cutflow(input_dict, req_hists, selections, stack, log, formats, path):
     '''
@@ -200,7 +201,6 @@ def cutflow(input_dict, req_hists, selections, stack, log, formats, path):
         hists = [cutflow_object.cutflow for cutflow_object in cutflow_by_key]
         ncuts = len(cutflow_by_key[0].labels)
         xticks = np.arange(ncuts)
-        # print('xticks', xticks)
         color_list = [req_hists[key]['color'] for key in req_hists.keys()]
         plot_path_selection = path+sel+'/'
         if not os.path.exists(plot_path_selection):
@@ -234,7 +234,7 @@ def cutflow(input_dict, req_hists, selections, stack, log, formats, path):
                     log_mode_text = 'log'
                 else :
                     log_mode_text = 'linear'
-            
+
                 if stack_mode :
                     stack_mode_text = 'stacked'
                 else :
@@ -245,6 +245,7 @@ def cutflow(input_dict, req_hists, selections, stack, log, formats, path):
                     fig.savefig(full_name,dpi=240);
                     print(filename, " saved at ", plot_path_selection)
                 plt.close()
+
         yield_plot(
             name='Yield',
             title=f'{sel} Yield',
@@ -256,7 +257,7 @@ def cutflow(input_dict, req_hists, selections, stack, log, formats, path):
         )
         print('-------------------------------------------------------------------')
         print('_____________________________________________________________________\n')
-        
+
 
 def plots(input_dict, req_hists, req_plots, selections, stack, log, formats, path):
     '''
@@ -314,11 +315,11 @@ def plots(input_dict, req_hists, req_plots, selections, stack, log, formats, pat
         plot_path_selection = path+sel+'/'
         if not os.path.exists(plot_path_selection):
             os.makedirs(plot_path_selection)
-            
+
         for hist_name in req_plots:
             hist = [hists[hist_name] for hists in hist_list]
             hist_signal = [hists[hist_name] for hists in hist_list_signal]
-            
+
             print(hist_name, ' : ', props[hist_name].title)
             print('---------------------------------------------------------------')
             for log_mode in log :
@@ -347,7 +348,7 @@ def plots(input_dict, req_hists, req_plots, selections, stack, log, formats, pat
                         sigl_hist = sum(hist_signal)+sum(hist) #Manual stacking because independent stacking is not supported in mplhep
                     else :
                         sigl_hist = hist_signal
-                    
+
                     hep.histplot(
                         sigl_hist,
                         color=color_list_signal,
@@ -362,7 +363,7 @@ def plots(input_dict, req_hists, req_plots, selections, stack, log, formats, pat
                         log_mode_text = 'log'
                     else :
                         log_mode_text = 'linear'
-                
+
                     if stack_mode :
                         stack_mode_text = 'stacked'
                     else :
@@ -395,8 +396,6 @@ def makeplot(fig, ax, hist, name, title, label, xlabel, ylabel, bins, xmin, xmax
 
     ax.text(0.25, 1.02, 'FCC Analyses: FCC Simulation Delphes', fontsize=9, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
     ax.text(0.92, 1.02, '$\\sqrt{s} = 240GeV$', fontsize=9, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
-    #ax.text(0.84,0.54, 'FCCee', fontsize=9, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
-    #ax.text(0.84,0.50, 'Sample = p8_ee_ZH_ecm240', fontsize=9, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
 
     if  cutflow_mode:
         ax.set_ylabel(ylabel)
@@ -406,16 +405,14 @@ def makeplot(fig, ax, hist, name, title, label, xlabel, ylabel, bins, xmin, xmax
         plt.xlim([xmin,xmax])
         plt.xticks(np.linspace(xmin,xmax,xticks+1))
     ax.set_xlabel(xlabel)
-    
+
     if log :
         ax.set_yscale('log')
-    
+
     ax.set_title(title,pad=25,  fontsize= "15", color="#192655")
-    # ax.axvline(91,label="91 GeV", color='r', linestyle='--')
 
     if cutflow_mode:
         fig.legend(prop={"size":10},loc= (0.74,0.74) )
-    
 
 
 ###############################

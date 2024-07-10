@@ -34,10 +34,16 @@ plot_props = {
 }
 props = pd.DataFrame(plot_props)
 
-cross_sections = { # Taken as is from https://github.com/HEP-FCC/FCCAnalyses/blob/master/examples/FCCee/higgs/mH-recoil/histmaker_mumu.py#L7
-    'p8_ee_WW_ecm240': 0.25792,
-    'p8_ee_ZZ_ecm240': 2 * 1.35899 * 0.034 * 0.152,
-    'p8_ee_ZH_ecm240': 0.201868 * 0.034
+# cross_sections = { # Taken as is from https://github.com/HEP-FCC/FCCAnalyses/blob/master/examples/FCCee/higgs/mH-recoil/histmaker_mumu.py#L7
+#     'p8_ee_WW_ecm240': 0.25792,
+#     'p8_ee_ZZ_ecm240': 2 * 1.35899 * 0.034 * 0.152,
+#     'p8_ee_ZH_ecm240': 0.201868 * 0.034
+# }
+
+cross_sections = {#in pb-1 # Taken as is from FCC events catalogue at https://fcc-physics-events.web.cern.ch/FCCee/spring2021/Delphesevents_IDEA.php
+    'p8_ee_WW_ecm240': 16.4385,
+    'p8_ee_ZZ_ecm240': 1.35899,
+    'p8_ee_ZH_ecm240': 0.201868
 }
 
 ##################################
@@ -49,9 +55,9 @@ log = [True, False]
 formats = ['png','pdf']
 req_plots = ['Zm', 'Zm_zoom', 'Recoilm', 'Recoilm_zoom', 'Recoilm_zoom1']
 req_hists = {
-    "ZH":{"datasets":['p8_ee_ZH_ecm240'],"color":'r'},
-    "ZZ":{"datasets":['p8_ee_ZZ_ecm240'],"color":'g'},
-    "WW":{"datasets":['p8_ee_WW_ecm240'],"color":'b'}
+    "ZH":{"type":'Signal',"datasets":['p8_ee_ZH_ecm240'],"color":'r'},
+    "ZZ":{"type":'Background',"datasets":['p8_ee_ZZ_ecm240'],"color":'g'},
+    "WW":{"type":'Background',"datasets":['p8_ee_WW_ecm240'],"color":'b'}
 }
 plot_path = 'outputs/FCCee/higgs/mH-recoil/mumu/plots/'
 intLumi        = 5.0e+06 #in pb-1
@@ -78,15 +84,15 @@ def get_xsec_scale(dataset, raw_events, Luminosity):
 def accumulate(dicts):
     """
     Merges an array of dictionaries and adds up the values of common keys.
-    
+
     Parameters:
     dicts (list): A list of dictionaries to be merged.
-    
+
     Returns:
     dict: A dictionary with combined keys and values summed for common keys.
     """
     dict = {}
-    
+
     for dictionary in dicts:
         for key, value in dictionary.items():
             if key in dict:
@@ -160,7 +166,7 @@ def yield_plot(name, title, keys, cutflow_obs, formats, path):
         full_name = path+filename
         fig.savefig(full_name,dpi=240);
         print(filename, " saved at ", path)
-    
+
 
 def cutflow(input_dict, req_hists, selections, stack, log, formats, path):
     '''
@@ -195,7 +201,6 @@ def cutflow(input_dict, req_hists, selections, stack, log, formats, path):
         hists = [cutflow_object.cutflow for cutflow_object in cutflow_by_key]
         ncuts = len(cutflow_by_key[0].labels)
         xticks = np.arange(ncuts)
-        # print('xticks', xticks)
         color_list = [req_hists[key]['color'] for key in req_hists.keys()]
         plot_path_selection = path+sel+'/'
         if not os.path.exists(plot_path_selection):
@@ -205,12 +210,13 @@ def cutflow(input_dict, req_hists, selections, stack, log, formats, path):
         print('-------------------------------------------------------------------')
         for log_mode in log:
             for stack_mode in stack:
+                name = 'Cutflow'
                 fig, ax = plt.subplots(figsize=(8,8))
                 makeplot(
                     fig=fig,
                     ax=ax,
                     hist=hists,
-                    name='Cutflow',
+                    name=name,
                     title=sel+' Cutflow',
                     label=req_hists.keys(),
                     xlabel='Cut Order',
@@ -220,15 +226,26 @@ def cutflow(input_dict, req_hists, selections, stack, log, formats, path):
                     xmax=xticks[-1],
                     log=log_mode,
                     stack=stack_mode,
-                    # color=props[hist_name].color,
                     color=color_list,
                     histtype='fill',
-                    formats=formats, #is an array
-                    path=plot_path_selection,
-                    # xticks = xticks,
                     cutflow_mode=True
                 )
+                if log_mode :
+                    log_mode_text = 'log'
+                else :
+                    log_mode_text = 'linear'
+
+                if stack_mode :
+                    stack_mode_text = 'stacked'
+                else :
+                    stack_mode_text = 'unstacked'
+                for format in formats :
+                    filename = name+'_'+log_mode_text+'_'+stack_mode_text+'.'+format
+                    full_name = plot_path_selection+filename
+                    fig.savefig(full_name,dpi=240);
+                    print(filename, " saved at ", plot_path_selection)
                 plt.close()
+
         yield_plot(
             name='Yield',
             title=f'{sel} Yield',
@@ -240,7 +257,7 @@ def cutflow(input_dict, req_hists, selections, stack, log, formats, path):
         )
         print('-------------------------------------------------------------------')
         print('_____________________________________________________________________\n')
-        
+
 
 def plots(input_dict, req_hists, req_plots, selections, stack, log, formats, path):
     '''
@@ -252,38 +269,63 @@ def plots(input_dict, req_hists, req_plots, selections, stack, log, formats, pat
 
         #Get hist array for different backgrounds
         label_list = []
+        label_list_signal = []
         dataset_list = []
+        dataset_list_signal = []
         color_list = []
+        color_list_signal = []
         hist_list = []
+        hist_list_signal = []
         for key in req_hists :
-            label = key
-            datasets = req_hists[key]['datasets']
-            color = req_hists[key]['color']
-            hists = []
-            for i in datasets:
-                object = input_dict[i]['cutflow'][sel]
-                Raw_Events = object.result().nevcutflow[0]
-                xsec_scale = get_xsec_scale(i, Raw_Events, intLumi)
-                hist = input_dict[i]['histograms'][sel]
-                scaled_hist = { name: xsec_scale*hist for name, hist in hist.items()}
-                hists.append(scaled_hist)
-            label_list.append(label)
-            dataset_list.append(datasets)
-            color_list.append(color)
-            hist_list.append(accumulate(hists))
+            if req_hists[key]['type'] == 'Signal':
+                label_signal = key
+                datasets_signal = req_hists[key]['datasets']
+                color_signal = req_hists[key]['color']
+                hists_signal = []
+                for i in datasets_signal:
+                    object_signal = input_dict[i]['cutflow'][sel]
+                    Raw_Events_signal = object_signal.result().nevcutflow[0]
+                    xsec_scale_signal = get_xsec_scale(i, Raw_Events_signal, intLumi)
+                    hist_signal = input_dict[i]['histograms'][sel]
+                    scaled_hist_signal = { name: xsec_scale_signal*hist for name, hist in hist_signal.items()}
+                    hists_signal.append(scaled_hist_signal)
+                label_list_signal.append(label_signal)
+                dataset_list_signal.append(datasets_signal)
+                color_list_signal.append(color_signal)
+                hist_list_signal.append(accumulate(hists_signal))
+            elif req_hists[key]['type'] == 'Background':
+                label = key
+                datasets = req_hists[key]['datasets']
+                color = req_hists[key]['color']
+                hists = []
+                for i in datasets:
+                    object = input_dict[i]['cutflow'][sel]
+                    Raw_Events = object.result().nevcutflow[0]
+                    xsec_scale = get_xsec_scale(i, Raw_Events, intLumi)
+                    hist = input_dict[i]['histograms'][sel]
+                    scaled_hist = { name: xsec_scale*hist for name, hist in hist.items()}
+                    hists.append(scaled_hist)
+                label_list.append(label)
+                dataset_list.append(datasets)
+                color_list.append(color)
+                hist_list.append(accumulate(hists))
+            else:
+                raise 'Unrecognised type in req_hists'
 
         plot_path_selection = path+sel+'/'
         if not os.path.exists(plot_path_selection):
             os.makedirs(plot_path_selection)
-            
+
         for hist_name in req_plots:
             hist = [hists[hist_name] for hists in hist_list]
-            
+            hist_signal = [hists[hist_name] for hists in hist_list_signal]
+
             print(hist_name, ' : ', props[hist_name].title)
             print('---------------------------------------------------------------')
             for log_mode in log :
                 for stack_mode in stack:
                     fig, ax = plt.subplots(figsize=(8,8))
+                    #Backgrounds
                     makeplot(
                         fig=fig,
                         ax=ax,
@@ -297,20 +339,47 @@ def plots(input_dict, req_hists, req_plots, selections, stack, log, formats, pat
                         xmin=props[hist_name].xmin,
                         xmax=props[hist_name].xmax,
                         log=log_mode,
-                        stack=stack_mode,
-                        # color=props[hist_name].color,
+                        stack=True, #Always stack backgrounds
                         color=color_list,
                         histtype=props[hist_name].histtype,
-                        formats=formats, #is an array
-                        path=plot_path_selection
                     )
+                    #Signal
+                    if stack_mode :
+                        sigl_hist = sum(hist_signal)+sum(hist) #Manual stacking because independent stacking is not supported in mplhep
+                    else :
+                        sigl_hist = hist_signal
+
+                    hep.histplot(
+                        sigl_hist,
+                        color=color_list_signal,
+                        label=label_list_signal,
+                        histtype='step',
+                        stack=False, #overridden by stack_mode bool
+                        linewidth=1,
+                        ax=ax
+                    )
+                    fig.legend(prop={"size":10},loc= (0.74,0.74) )
+                    if log_mode :
+                        log_mode_text = 'log'
+                    else :
+                        log_mode_text = 'linear'
+
+                    if stack_mode :
+                        stack_mode_text = 'stacked'
+                    else :
+                        stack_mode_text = 'unstacked'
+                    for format in formats :
+                        filename = props[hist_name].name+'_'+log_mode_text+'_'+stack_mode_text+'.'+format
+                        full_name = plot_path_selection+filename
+                        fig.savefig(full_name,dpi=240);
+                        print(filename, " saved at ", plot_path_selection)
                     plt.close()
             print('-------------------------------------------------------------------')
         print('_____________________________________________________________________\n')
 
-def makeplot(fig, ax, hist, name, title, label, xlabel, ylabel, bins, xmin, xmax, log, stack, color, histtype, formats, path, xticks=10, cutflow_mode=False):
+def makeplot(fig, ax, hist, name, title, label, xlabel, ylabel, bins, xmin, xmax, log, stack, color, histtype, xticks=10, cutflow_mode=False):
     '''
-    Makes a single kinematic plot and saves it in various formats
+    Makes a single kinematic plot on an ax object
     '''
     hep.histplot(
         hist,
@@ -327,8 +396,6 @@ def makeplot(fig, ax, hist, name, title, label, xlabel, ylabel, bins, xmin, xmax
 
     ax.text(0.25, 1.02, 'FCC Analyses: FCC Simulation Delphes', fontsize=9, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
     ax.text(0.92, 1.02, '$\\sqrt{s} = 240GeV$', fontsize=9, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
-    #ax.text(0.84,0.54, 'FCCee', fontsize=9, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
-    #ax.text(0.84,0.50, 'Sample = p8_ee_ZH_ecm240', fontsize=9, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
 
     if  cutflow_mode:
         ax.set_ylabel(ylabel)
@@ -338,27 +405,15 @@ def makeplot(fig, ax, hist, name, title, label, xlabel, ylabel, bins, xmin, xmax
         plt.xlim([xmin,xmax])
         plt.xticks(np.linspace(xmin,xmax,xticks+1))
     ax.set_xlabel(xlabel)
-    
+
     if log :
         ax.set_yscale('log')
-        log_mode_text = 'log'
-    else :
-        log_mode_text = 'linear'
 
-    if stack :
-        stack_mode_text = 'stacked'
-    else :
-        stack_mode_text = 'unstacked'
-    
     ax.set_title(title,pad=25,  fontsize= "15", color="#192655")
-    # ax.axvline(91,label="91 GeV", color='r', linestyle='--')
-    fig.legend(prop={"size":10},loc= (0.74,0.74) )
 
-    for format in formats :
-        filename = name+'_'+log_mode_text+'_'+stack_mode_text+'.'+format
-        full_name = path+filename
-        fig.savefig(full_name,dpi=240);
-        print(filename, " saved at ", path)
+    if cutflow_mode:
+        fig.legend(prop={"size":10},loc= (0.74,0.74) )
+
 
 ###############################
 # Call the plotting functions #
