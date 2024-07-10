@@ -1,5 +1,4 @@
 from coffea.util import load
-import hist
 import matplotlib.pyplot as plt
 import mplhep as hep
 import os

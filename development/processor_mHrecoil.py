@@ -1,10 +1,6 @@
-from coffea.nanoevents import BaseSchema
 from coffea import processor
 from coffea.analysis_tools import PackedSelection
-import dask_awkward as dak
-import dask
 import awkward as ak
-import numpy as np
 import hist
 import numba
 import vector

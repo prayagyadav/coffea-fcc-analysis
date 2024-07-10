@@ -1,19 +1,11 @@
 
 if __name__=="__main__":
-    from coffea import processor
     import argparse
     from coffea import util
-    from coffea.nanoevents import BaseSchema , NanoEventsFactory
-    import awkward as ak
-    import numba
-    import json
-    import rich
+    from coffea.nanoevents import BaseSchema
     import numpy as np
-    import json
     import yaml
     import os
-    import shutil
-    import logging
     from processor_mHrecoil import mHrecoil
     from coffea.dataset_tools import apply_to_fileset,max_chunks,preprocess
     import dask

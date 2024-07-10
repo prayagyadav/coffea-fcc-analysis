@@ -1,19 +1,11 @@
 
 if __name__=="__main__":
-    from coffea import processor
     import argparse
     from coffea import util
-    from coffea.nanoevents import BaseSchema , NanoEventsFactory
-    import awkward as ak
-    import numba
-    import json
-    import rich
+    from coffea.nanoevents import BaseSchema
     import numpy as np
-    import json
     import yaml
     import os
-    import shutil
-    import logging
     from processor_mHrecoil import mHrecoil
     from coffea.dataset_tools import apply_to_fileset,max_chunks,preprocess
     import dask
@@ -45,7 +37,7 @@ if __name__=="__main__":
         Loads the yaml data for filesets
         '''
         onlinesystem_path = '/cvmfs/fcc.cern.ch'
-        localsystem_path = './../filesets'
+        localsystem_path = './../../../../../filesets/'
         path = '/'.join(
             [
              'FCCDicts',
@@ -72,7 +64,7 @@ if __name__=="__main__":
                 raise f'Could not find yaml files at {filesystem_path} .'
             yaml_dict[sample] = dict
         return yaml_dict
-    
+
     def get_fileset(yaml_dict, fraction, skipbadfiles=True, redirector=''):
         output_fileset_dictionary = {}
         print('_________Loading fileset__________')
