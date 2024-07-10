@@ -17,9 +17,11 @@ if __name__=="__main__":
     from processor_mHrecoil import mHrecoil
     from coffea.dataset_tools import apply_to_fileset,max_chunks,preprocess
     import dask
-    from dask.diagnostics import ProgressBar
+    from dask.diagnostics import ProgressBar#, ResourceProfiler
     pgb = ProgressBar()
     pgb.register()
+    #rprof = ResourceProfiler()
+    #rprof.register()
 
     ###################################
     # Define functions and parameters #
@@ -36,12 +38,16 @@ if __name__=="__main__":
         'p8_ee_ZH_ecm240':0.2
     }
 
+    redirectors = {
+        "eos":'root://eospublic.cern.ch/'
+    }
+    
     def load_yaml_fileinfo(process):
         '''
         Loads the yaml data for filesets
         '''
         onlinesystem_path = '/cvmfs/fcc.cern.ch'
-        localsystem_path = './../../../filesets'
+        localsystem_path = './../filesets'
         path = '/'.join(
             [
              'FCCDicts',
@@ -68,16 +74,8 @@ if __name__=="__main__":
                 raise f'Could not find yaml files at {filesystem_path} .'
             yaml_dict[sample] = dict
         return yaml_dict
-
+    
     def get_fileset(yaml_dict, fraction, skipbadfiles=True, redirector=''):
-        '''
-        Loads a reduced fileset in appropriate format 
-        Arguments:  yaml_dict(dict)      -->  Yaml dictionary loaded from load_yaml_fileinfo
-                    fraction(dict)       -->  Dictionary of fractions of full dataset to be run
-                    skipbadfiles(bool)   -->  Default True. Skips bad files as listed in the yaml description
-                    redirector(str)      -->  Default '' . Redirector string to be attached for each file
-        Returns: output_fileset_dictionary(dict)
-        '''
         output_fileset_dictionary = {}
         print('_________Loading fileset__________')
         for key in yaml_dict.keys():
@@ -146,20 +144,86 @@ if __name__=="__main__":
         "--executor",
         choices=["condor", "dask"],
         help="Enter where to run the file : dask(local) or condor (Note: Only dask(local) works at the moment)",
-        default="dask",
+        default="futures",
         type=str
     )
-
+    parser.add_argument(
+        "-r",
+        "--redirector",
+        choices=["eos"],
+        help="Enter the redirector to use, eg. eos",
+        default="",
+        type=str
+    )
     parser.add_argument(
         "-m",
         "--maxchunks",
         help="Enter the number of chunks to be processed; by default 10",
         type=int
         )
-        
+    
+    parser.add_argument(
+        "-f",
+        "--nfiles",
+        help="Enter the number of files to run; by default None ie full dataset",
+        type=int
+        )
+    
     inputs = parser.parse_args()
 
-    print('______________________________________________mH-Recoil (mumu) Example______________________________________________________\n')
+    def getraw(jsonfilename):
+        '''
+        Load the raw dictionary
+        '''
+        with open(jsonfilename) as f :
+            full_fileset = json.load(f)
+        return full_fileset
+
+    def add_redirector(filesetname,redirector=""):
+        '''
+        Choose your redirector
+        '''
+        redirectors = {
+            "eos":'root://eospublic.cern.ch/'
+        }
+        if len(redirector) != 0 :
+            redirector_string = redirectors[redirector]
+        else:
+            redirector_string = ''
+        
+        raw_fileset = getraw(filesetname)
+    
+        # Expecting raw_fileset to be in {key1:{files:{filepath1:events, filepath2:events, ...}},key2:... } format
+        new_fileset = {}
+        for key in raw_fileset.keys():
+            new_files = {}
+            new_fileset[key] = {}
+            for file_path in raw_fileset[key]["files"].keys():
+                new_name = redirector_string+file_path
+                new_files[new_name] = "events"
+            new_fileset[key]["files"] = new_files
+    
+        return new_fileset
+
+    #raw_myfileset = add_redirector(filesetname="./fileset.json", redirector=inputs.redirector)
+    
+    def reduce_fileset(fileset,n=None):
+        output = fileset
+        for key in fileset:
+            new_fileset = {}
+            fileset_keys = list(fileset[key]['files'].keys())
+            if n==None :
+                n = len(fileset_keys)
+            sliced_keys = fileset_keys[:n]
+            for file in sliced_keys:
+                new_fileset[file]="events"
+            output[key]['files'] = new_fileset
+        print('Running ',n ,' files per key ...' )
+        return output
+
+    #myfileset = reduce_fileset(raw_myfileset,inputs.nfiles)
+    #print(myfileset)
+
     raw_yaml = load_yaml_fileinfo(process)
     myfileset = get_fileset(raw_yaml, fraction, redirector='root://eospublic.cern.ch/')
 
@@ -174,6 +238,8 @@ if __name__=="__main__":
     skip_bad_files=True,
     save_form=False,
     )
+    
+    #print(dataset_runnable)
 
     #For local dask execution
     if inputs.executor == "dask" :
@@ -184,8 +250,8 @@ if __name__=="__main__":
                     schemaclass=BaseSchema,
         )
         computed = dask.compute(to_compute)
+        # progress(computed)
         (Output,) = computed
-
     #For condor execution
     elif inputs.executor == "condor" :
         raise('HTCondor execution is not available yet!')
