@@ -6,7 +6,7 @@ Start a singularity shell with coffea with
 ./shell
 ```
 ## Examples
-Example Analyses are separated into 4 files: 
+Example Analyses are separated into these files: 
 - processor_<example_name>.py
 - runner_<example_name>.py
 - plotter_<example_name>.py
