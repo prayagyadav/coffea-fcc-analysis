@@ -11,12 +11,12 @@ Example Analyses are separated into these files:
 - runner_<example_name>.py
 - plotter_<example_name>.py
 
-To run the examples/FCCee/higgs/mHrecoil/mumu example:
+To run the ZH Recoil example:
 Step 0 : Clone this repository
 
 1. Navigate to example folder
    ```bash
-   cd examples/mHrecoil/mumu/ 
+   cd examples/FCCee/higgs/mHrecoil/mumu/ 
    ```
 2. Start the singularity shell
    ```bash
