@@ -10,9 +10,10 @@ Example Analyses are separated into 4 files:
 - processor_<example_name>.py
 - runner_<example_name>.py
 - plotter_<example_name>.py
-- fileset.json
 
 To run the mHrecoil/mumu example:
+Step 0 : Clone this repository
+
 1. Navigate to example folder
    ```bash
    cd examples/mHrecoil/mumu/ 
@@ -21,9 +22,9 @@ To run the mHrecoil/mumu example:
    ```bash
    ./shell
    ```
-3. Within the shell execute runner_mHrecoil.py with the desired parameters. The output file would be saved at ./output/FCCee/higgs/mH-recoil/mumu/. The -f flags limits the number of root files per sample.
+3. Within the shell execute runner_mHrecoil.py with the desired parameters. The output file would be saved at ./output/FCCee/higgs/mH-recoil/mumu/.
    ```bash
-   python3 runner_mHrecoil.py -e dask -f 5
+   python3 runner_mHrecoil.py -e dask
    ```
 4. Generate plots with plotter_mHrecoil.py. The plots would be saved at ./output/FCCee/higgs/mH-recoil/mumu/plots/
    ```bash
