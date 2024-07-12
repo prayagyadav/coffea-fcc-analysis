@@ -1,0 +1,137 @@
+Coffea Image: coffeateam/coffea-dask-almalinux8:2024.5.0-py3.11
+Connected to /cvmfs/fcc.cern.ch
+Loaded : /cvmfs/fcc.cern.ch/FCCDicts/yaml/FCCee/spring2021/IDEA/p8_ee_ZZ_ecm240/merge.yaml
+Loaded : /cvmfs/fcc.cern.ch/FCCDicts/yaml/FCCee/spring2021/IDEA/p8_ee_WW_ecm240/merge.yaml
+Loaded : /cvmfs/fcc.cern.ch/FCCDicts/yaml/FCCee/spring2021/IDEA/p8_ee_ZH_ecm240/merge.yaml
+_________Loading fileset__________
+----------------------------------
+----------p8_ee_ZZ_ecm240---------
+----------------------------------
+Total available events = 59800000
+Fraction needed = 0.005
+Needed events = 299000.0
+Assigned events = 300000
+Number of files = 3
+Files:
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_ZZ_ecm240/events_000203378.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_ZZ_ecm240/events_001062578.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_ZZ_ecm240/events_001109319.root
+----------------------------------
+----------p8_ee_WW_ecm240---------
+----------------------------------
+Total available events = 10000000
+Fraction needed = 0.5
+Needed events = 5000000.0
+Assigned events = 5000000
+Number of files = 50
+Files:
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_002446962.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_003660780.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_003871346.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_006111023.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_006917088.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_007700274.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_009698995.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_014553223.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_015203393.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_016976279.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_018665926.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_018713241.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_019837840.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_023471508.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_026468529.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_027476245.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_028807086.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_028914696.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_030994453.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_031800883.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_032306830.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_036566822.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_039767239.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_040168535.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_041868503.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_042960849.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_045685798.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_046174706.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_046854584.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_049408485.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_050421846.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_051087029.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_051591218.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_057156831.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_057603313.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_057691795.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_059017045.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_063234923.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_065752700.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_070028470.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_070650542.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_072894802.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_073177487.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_073916792.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_074962718.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_076184375.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_078174375.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_081552316.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_087150860.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_WW_ecm240/events_087671235.root
+----------------------------------
+----------p8_ee_ZH_ecm240---------
+----------------------------------
+Total available events = 10000000
+Fraction needed = 0.2
+Needed events = 2000000.0
+Assigned events = 2000000
+Number of files = 20
+Files:
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_ZH_ecm240/events_002125352.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_ZH_ecm240/events_004864728.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_ZH_ecm240/events_008903100.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_ZH_ecm240/events_014692952.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_ZH_ecm240/events_018575502.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_ZH_ecm240/events_022606167.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_ZH_ecm240/events_023301643.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_ZH_ecm240/events_025023196.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_ZH_ecm240/events_029706955.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_ZH_ecm240/events_031985013.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_ZH_ecm240/events_032939801.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_ZH_ecm240/events_034891952.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_ZH_ecm240/events_034912729.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_ZH_ecm240/events_037707607.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_ZH_ecm240/events_038855885.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_ZH_ecm240/events_041407970.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_ZH_ecm240/events_043299326.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_ZH_ecm240/events_045124915.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_ZH_ecm240/events_046318292.root
+	 root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_ZH_ecm240/events_048296984.root
+Executing locally with dask ...
+Preparing fileset before run...
+Dashboard at  http://127.0.0.1:8787/status
+Processing ...
+[                                        ] | 0% Completed | 411.99 us[########################################] | 100% Completed | 101.00 ms
+[                                        ] | 0% Completed | 273.73 us[########################################] | 100% Completed | 100.77 ms
+[                                        ] | 0% Completed | 259.92 us[########################################] | 100% Completed | 100.82 ms
+[                                        ] | 0% Completed | 390.11 us[########################################] | 100% Completed | 101.32 ms
+[                                        ] | 0% Completed | 421.15 us[########################################] | 100% Completed | 100.75 ms
+[                                        ] | 0% Completed | 519.74 us[########################################] | 100% Completed | 101.18 ms
+[                                        ] | 0% Completed | 644.62 us[########################################] | 100% Completed | 103.47 ms
+[                                        ] | 0% Completed | 270.18 us[########################################] | 100% Completed | 100.58 ms
+[                                        ] | 0% Completed | 409.75 us[########################################] | 100% Completed | 100.95 ms
+[                                        ] | 0% Completed | 723.73 us[########################################] | 100% Completed | 101.49 ms
+[                                        ] | 0% Completed | 360.95 us[########################################] | 100% Completed | 101.04 ms
+[                                        ] | 0% Completed | 361.64 us[########################################] | 100% Completed | 101.65 ms
+[                                        ] | 0% Completed | 407.04 us[########################################] | 100% Completed | 102.85 ms
+[                                        ] | 0% Completed | 518.84 us[########################################] | 100% Completed | 101.09 ms
+[                                        ] | 0% Completed | 915.81 us[########################################] | 100% Completed | 101.46 ms
+[                                        ] | 0% Completed | 568.29 us[########################################] | 100% Completed | 100.86 ms
+[                                        ] | 0% Completed | 512.94 us[########################################] | 100% Completed | 101.34 ms
+[                                        ] | 0% Completed | 1.60 ms[########################################] | 100% Completed | 102.07 ms
+[                                        ] | 0% Completed | 361.77 us[########################################] | 100% Completed | 101.01 ms
+[                                        ] | 0% Completed | 496.68 us[########################################] | 100% Completed | 100.95 ms
+[                                        ] | 0% Completed | 242.97 us[########################################] | 100% Completed | 100.88 ms
+[                                        ] | 0% Completed | 338.47 us[########################################] | 100% Completed | 100.98 ms
+[                                        ] | 0% Completed | 251.97 us[########################################] | 100% Completed | 100.82 ms
+[                                        ] | 0% Completed | 618.70 us[########################################] | 100% Completed | 100.93 ms
+Saving the output to :  mHrecoil_mumu.coffea
+File mHrecoil_mumu.coffea saved at outputs/FCCee/higgs/mH-recoil/mumu/
+Execution completed.

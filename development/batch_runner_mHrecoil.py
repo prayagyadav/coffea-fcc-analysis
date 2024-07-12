@@ -9,7 +9,7 @@ if __name__=="__main__":
     from processor_mHrecoil import mHrecoil
     from coffea.dataset_tools import apply_to_fileset,max_chunks,preprocess
     import dask
-    from dask.distributed import Client
+    from dask.distributed import Client, LocalCluster
     from dask_jobqueue import HTCondorCluster
     from dask.diagnostics import ProgressBar, Profiler
     #pgb = ProgressBar()
@@ -26,8 +26,8 @@ if __name__=="__main__":
     }
     fraction = {
         'p8_ee_ZZ_ecm240':0.005,
-        'p8_ee_WW_ecm240':0.5*0.1,
-        'p8_ee_ZH_ecm240':0.2*0.1
+        'p8_ee_WW_ecm240':0.5,
+        'p8_ee_ZH_ecm240':0.2
     }
 
     redirectors = {
@@ -126,8 +126,6 @@ if __name__=="__main__":
         return output_fileset_dictionary
     
     def runCondor(cores=1, memory="2 GB", disk="1 GB", death_timeout = '60', workers=4):
-        from distributed import Client
-        from dask_jobqueue import HTCondorCluster
 
         os.environ["CONDOR_CONFIG"] = "/etc/condor/condor_config"
         #_x509_path = move_X509()
@@ -153,9 +151,9 @@ if __name__=="__main__":
                 "+SingularityImage": '"/cvmfs/unpacked.cern.ch/registry.hub.docker.com/coffeateam/coffea-dask-almalinux8:2024.5.0-py3.11/"',
                 "Requirements": "HasSingularityJobStart",
                 #"request_GPUs" : "1",
-                "InitialDir": f'/scratch/{os.environ["USER"]}',
+                #"InitialDir": f'/scratch/{os.environ["USER"]}',
                 #"transfer_input_files": f'{_x509_path},{os.environ["EXTERNAL_BIND"]}/monoHbb'
-                "transfer_input_files": f'{os.environ["EXTERNAL_BIND"]}/monoHbb'
+                "transfer_input_files": f'{os.environ["EXTERNAL_BIND"]}/processor_mHrecoil.py'
             },
             job_script_prologue=[
                 "export XRD_RUNFORKHANDLER=1",
@@ -200,6 +198,7 @@ if __name__=="__main__":
     #For local dask execution
     if inputs.executor == "dask" :
         print("Executing locally with dask ...")
+        dask.config.set(scheduler='processes')
         print('Preparing fileset before run...')
         dataset_runnable, dataset_updated = preprocess(
         myfileset,
@@ -209,6 +208,13 @@ if __name__=="__main__":
         skip_bad_files=True,
         save_form=False,
         )
+        
+        cluster = LocalCluster(n_workers=16)
+        #cluster.adapt(minimum=1, maximum=10)
+        print('Dashboard at ', cluster.dashboard_link)
+
+        client = Client(cluster)
+
         print('Processing ...')
         with ProgressBar(), Profiler() as prof:
             to_compute = apply_to_fileset(
@@ -216,7 +222,9 @@ if __name__=="__main__":
                         max_chunks(dataset_runnable, inputs.maxchunks),
                         schemaclass=BaseSchema,
             )
-            computed = dask.compute(to_compute)
+            computed = client.compute(to_compute)
+            computed = (computed.result(),)
+
 
     #For condor execution
     elif inputs.executor == "condor" :
@@ -236,7 +244,7 @@ if __name__=="__main__":
 
             print('Processing ...')
             to_compute = apply_to_fileset(
-                        mHrecoil(),
+                mHrecoil(),
                         max_chunks(dataset_runnable, inputs.maxchunks),
                         schemaclass=BaseSchema,
             )
@@ -247,14 +255,14 @@ if __name__=="__main__":
     ###############
     # Run Summary #
     ###############
-    print('_______________________________________________')
-    print('        Summary of Resource Utilization        ')
-    print('_______________________________________________')
-    ntask = 0
-    for task in prof.results:
-        print(f'Task {ntask}: {task}')
-        ntask += 1
-    print('_______________________________________________')
+    #print('_______________________________________________')
+    #print('        Summary of Resource Utilization        ')
+    #print('_______________________________________________')
+    #ntask = 0
+    #for task in prof.results:
+    #    print(f'Task {ntask}: {task}')
+    #    ntask += 1
+    #print('_______________________________________________')
     
     ##########################
     # Create the output file #
