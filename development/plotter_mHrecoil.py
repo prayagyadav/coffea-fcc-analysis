@@ -1,4 +1,5 @@
 from coffea.util import load
+from coffea.analysis_tools import Cutflow
 import matplotlib.pyplot as plt
 import mplhep as hep
 import os
@@ -79,6 +80,29 @@ def get_xsec_scale(dataset, raw_events, Luminosity):
     else :
         raise 'Raw events less than of equal to zero!'
     return sf
+
+def add_cutflow(c1,c2):
+    '''
+    Add cutflow objects assuming they operate on non-overlaping sample regions
+    '''
+    r1 = c1.result()
+    r2 = c2.result()
+
+
+    if r1.labels == r2.labels :
+        names = r1.labels
+        names.remove('initial') # initial is added when Cutflow class is called, so removing it to preserve names list length
+        names = names
+        nevonecut = [a+b for a,b in zip(r1.nevonecut,r2.nevonecut)]
+        nevcutflow = [a+b for a,b in zip(r1.nevcutflow,r2.nevcutflow)]
+        masksonecut = [np.concatenate((a,b)) for a,b in zip(r1.masksonecut,r2.masksonecut)]
+        maskscutflow = [np.concatenate((a,b)) for a,b in zip(r1.maskscutflow,r2.maskscutflow)]
+        
+    else:
+        raise "The labels of the cutflow do not match!"
+    return Cutflow(names, nevonecut, nevcutflow, masksonecut, maskscutflow, delayed_mode=False)
+
+Cutflow.__add__ = add_cutflow #Monkey patch Cutflow class to enable the add method
 
 def accumulate(dicts):
     """
