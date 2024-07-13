@@ -7,8 +7,7 @@ else
 fi
 
 echo "Coffea Image: ${COFFEA_IMAGE}"
-export APPTAINER_BINDPATH="${PWD}:/srv,/eos,/afs,/cvmfs,/etc/condor,/usr/bin/myschedd.sh:/usr/bin/myschedd.sh,/usr/bin/myschedd:/usr/bin/myschedd,/etc/myschedd:/etc/myschedd,/lib64"
-EXTERNAL_BIND=${PWD}
-singularity exec --pwd /srv \
+
+EXTERNAL_BIND=${PWD} singularity exec -B ${PWD}:/srv,/ --pwd /srv \
 	/cvmfs/unpacked.cern.ch/registry.hub.docker.com/${COFFEA_IMAGE} \
 	/bin/bash --rcfile /srv/.bashrc
