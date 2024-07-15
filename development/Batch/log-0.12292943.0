@@ -1,0 +1,31 @@
+000 (12292943.000.000) 07/15 22:30:07 Job submitted from host: <137.138.120.116:9618?addrs=137.138.120.116-9618+[2001-1458-d00-16--17b]-9618&alias=bigbird12.cern.ch&noUDP&sock=schedd_2080_4914>
+...
+040 (12292943.000.000) 07/15 22:31:24 Started transferring input files
+	Transferring to host: <128.142.248.197:9618?addrs=128.142.248.197-9618+[2001-1458-301-73--100-c4]-9618&alias=b9g23p2961.cern.ch&noUDP&sock=slot1_36_3267_a59e_12543>
+...
+001 (12292943.000.000) 07/15 22:31:24 Job executing on host: <128.142.248.197:9618?addrs=128.142.248.197-9618+[2001-1458-301-73--100-c4]-9618&alias=b9g23p2961.cern.ch&noUDP&sock=startd_3222_9a3c>
+	SlotName: slot1_36@b9g23p2961.cern.ch
+	CondorScratchDir = "/pool/condor/dir_1779521"
+	Cpus = 1
+	Disk = 2991595
+	Memory = 2000
+...
+040 (12292943.000.000) 07/15 22:31:24 Finished transferring input files
+...
+006 (12292943.000.000) 07/15 22:31:25 Image size of job updated: 7796
+	2  -  MemoryUsage of job (MB)
+	1804  -  ResidentSetSize of job (KB)
+...
+040 (12292943.000.000) 07/15 22:31:25 Started transferring output files
+...
+040 (12292943.000.000) 07/15 22:31:25 Finished transferring output files
+...
+007 (12292943.000.000) 07/15 22:31:25 Shadow exception!
+	Error from slot1_36@b9g23p2961.cern.ch: STARTER at 128.142.248.197 failed to send file(s) to <137.138.120.116:9618>: |Error: reading from file /pool/condor/dir_1779521/outputs: (errno 2) No such file or directory; SHADOW failed to receive file(s) from <128.142.248.197:45221>
+	0  -  Run Bytes Sent By Job
+	20107  -  Run Bytes Received By Job
+...
+012 (12292943.000.000) 07/15 22:31:25 Job was held.
+	Transfer output files failure at execution point slot1_36@b9g23p2961.cern.ch while sending files to access point bigbird12. Details: reading from file /pool/condor/dir_1779521/outputs: (errno 2) No such file or directory
+	Code 12 Subcode 2
+...

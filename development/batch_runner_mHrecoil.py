@@ -11,6 +11,7 @@ if __name__=="__main__":
     from coffea.dataset_tools import apply_to_fileset,max_chunks,preprocess
     import dask
     import copy
+    import time
     from dask.diagnostics import ProgressBar
     pgb = ProgressBar()
     pgb.register()
@@ -219,7 +220,7 @@ if __name__=="__main__":
     
     should_transfer_files = IF_NEEDED
     when_to_transfer_output = ON_EXIT
-    transfer_input_files= batch_runner_mHrecoil.py,processor_mHrecoil.py
+    transfer_input_files= ../batch_runner_mHrecoil.py,../processor_mHrecoil.py
     transfer_output_files= {output}
     
     output = out-{executable.strip('job_').strip('.sh')}.$(ClusterId).$(ProcId)
@@ -300,7 +301,7 @@ if __name__=="__main__":
             computed = dask.compute(to_compute)
             (Out,) = computed
             Output.append(Out)
-            if nparallel > 1:
+            if inputs.chunks > 1:
                 output_filename = output_file.strip('.coffea')+f'-chunk{i}'+'.coffea'
             else:
                 output_filename = output_file
@@ -310,13 +311,13 @@ if __name__=="__main__":
         print("Execution completed.")
 
     #For condor execution
-    elif executor == "condor" :
+    elif inputs.executor == "condor" :
         print("Executing with condor ...")
         if not os.path.exists('Batch'):
             os.makedirs('Batch')
         os.chdir('Batch')
         for i in range(len(dataset_runnable)):
-            if nparallel > 1:
+            if inputs.chunks > 1:
                 output_filename = output_file.strip('.coffea')+f'-chunk{i}'+'.coffea'
             else:
                 output_filename = output_file
@@ -325,7 +326,8 @@ if __name__=="__main__":
                 inputs.maxchunks,
                 f'job_{i}.py',
                 output_filename,
-                path
+                f'outputs'
+                #path
             )
             print(f'\tjob_{i}.py created')
             create_job_shell_file(
@@ -336,9 +338,10 @@ if __name__=="__main__":
             create_submit_file(
                 filename=f'submit_{i}.sh',
                 executable=f'job_{i}.sh',
-                output=path
+                output=f"outputs"
             )
             print(f'\tsubmit_{i}.sh created')
-            p = subprocess.run(["cat",f"submit_{i}.sh"], capture_output=True).stdout.decode("utf-8")
-            print(p)
+            #p = subprocess.check_output(["/usr/bin/condor_submit",f"submit_{i}.sh"])
+            #time.sleep(1)
+            #print(p)
     os.chdir('../')
