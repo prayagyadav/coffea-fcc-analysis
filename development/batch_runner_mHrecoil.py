@@ -163,76 +163,69 @@ if __name__=="__main__":
     
         return out
 
-    def create_job_python_file(dataset_runnable, maxchunks,filename, output_file, path, ):
+    def create_job_python_file(dataset_runnable, maxchunks,filename, output_file):#, path):
         s = f'''
-    from coffea import util
-    from coffea.nanoevents import BaseSchema
-    import os
-    from processor_mHrecoil import mHrecoil
-    from coffea.dataset_tools import apply_to_fileset,max_chunks
-    import dask
-    
-    dataset_runnable = {dataset_runnable}
-    maxchunks = {maxchunks}
-    
-    to_compute = apply_to_fileset(
-                mHrecoil(),
-                max_chunks(dataset_runnable, maxchunks),
-                schemaclass=BaseSchema,
-    )
-    computed = dask.compute(to_compute)
-    (Output,) = computed
-    
-    print("Saving the output to : " , "{output_file}")
-    if not os.path.exists("{path}"):
-        os.makedirs("{path}")
-    util.save(output= Output, filename="{path}"+"{output_file}")
-    print("File {output_file} saved at {path}")
-    print("Execution completed.")
-        
+from coffea import util
+from coffea.nanoevents import BaseSchema
+import os
+from processor_mHrecoil import mHrecoil
+from coffea.dataset_tools import apply_to_fileset,max_chunks
+import dask
+
+dataset_runnable = {dataset_runnable}
+maxchunks = {maxchunks}
+
+to_compute = apply_to_fileset(
+            mHrecoil(),
+            max_chunks(dataset_runnable, maxchunks),
+            schemaclass=BaseSchema,
+)
+computed = dask.compute(to_compute)
+(Output,) = computed
+
+print("Saving the output to : " , "{output_file}")
+#if not os.path.exists("{path}"):
+#    os.makedirs("{path}")
+#util.save(output= Output, filename="{path}"+"/"+"{output_file}")
+util.save(output= Output, filename="{output_file}")
+print("File {output_file} saved")# at {path}")
+print("Execution completed.")
+
         '''
         with open(filename,'w') as f:
             f.write(s)
 
     def create_job_shell_file(filename, python_job_file):
-        s = f'''
-    #!/usr/bin/env bash
-    
-    export COFFEA_IMAGE=coffeateam/coffea-dask-almalinux8:2024.5.0-py3.11
-    
-    echo "Coffea Image: ${{COFFEA_IMAGE}}"
-    
-    EXTERNAL_BIND=${{PWD}}
-    
-    
-    singularity exec -B ${{PWD}}:/srv -B /etc/condor -B /eos -B /afs -B /cvmfs --pwd /srv \
-    /cvmfs/unpacked.cern.ch/registry.hub.docker.com/${{COFFEA_IMAGE}} \
-    /usr/local/bin/python3 {python_job_file} -e dask
-        
-        '''
+        s = f'''#!/usr/bin/bash
+export COFFEA_IMAGE=coffeateam/coffea-dask-almalinux8:2024.5.0-py3.11
+echo "Coffea Image: ${{COFFEA_IMAGE}}"
+EXTERNAL_BIND=${{PWD}}
+echo $(pwd)
+echo $(ls)
+singularity exec -B /etc/condor -B /eos -B /afs -B /cvmfs --pwd ${{PWD}} \
+/cvmfs/unpacked.cern.ch/registry.hub.docker.com/${{COFFEA_IMAGE}} \
+/usr/local/bin/python3 {python_job_file} -e dask >> singularity.log.{python_job_file.strip('.py')}
+echo $(ls)'''
         with open(filename,'w') as f:
             f.write(s)
 
-    def create_submit_file(filename, executable, output):
-        s = f'''
-    universe = vanilla
-    executable = {executable}
-    
-    should_transfer_files = IF_NEEDED
-    when_to_transfer_output = ON_EXIT
-    transfer_input_files= ../batch_runner_mHrecoil.py,../processor_mHrecoil.py
-    transfer_output_files= {output}
-    
-    output = out-{executable.strip('job_').strip('.sh')}.$(ClusterId).$(ProcId)
-    error = err-{executable.strip('job_').strip('.sh')}.$(ClusterId).$(ProcId)
-    log = log-{executable.strip('job_').strip('.sh')}.$(ClusterId).$(ProcId)
-    
-    queue 1
-        
-        '''
+    def create_submit_file(filename, executable, input, output):
+        s = f'''universe=vanilla
+executable={executable}
++JobFlavour="espresso"
+RequestCpus=1
+should_transfer_files=YES
+when_to_transfer_output=ON_EXIT_OR_EVICT
+transfer_input_files={input}
+transfer_output_files={output}
+output=out-{executable.strip('job_').strip('.sh')}.$(ClusterId).$(ProcId)
+error=err-{executable.strip('job_').strip('.sh')}.$(ClusterId).$(ProcId)
+log=log-{executable.strip('job_').strip('.sh')}.$(ClusterId).$(ProcId)
+queue 1'''
         with open(filename,'w') as f:
             f.write(s)
-    
+
+
     ##############################
     # Define the terminal inputs #
     ##############################
@@ -274,7 +267,8 @@ if __name__=="__main__":
     print('Preparing fileset before run...')
     if not os.path.exists(path):
         os.makedirs(path)
-    
+
+    pwd = os.getcwd()
     
     dataset_runnable, dataset_updated = zip(*[preprocess(
         fl,
@@ -316,7 +310,11 @@ if __name__=="__main__":
         if not os.path.exists('Batch'):
             os.makedirs('Batch')
         os.chdir('Batch')
+
         for i in range(len(dataset_runnable)):
+            if not os.path.exists(f'outputs_{i}'):
+                os.makedirs(f'outputs_{i}')
+
             if inputs.chunks > 1:
                 output_filename = output_file.strip('.coffea')+f'-chunk{i}'+'.coffea'
             else:
@@ -326,20 +324,24 @@ if __name__=="__main__":
                 inputs.maxchunks,
                 f'job_{i}.py',
                 output_filename,
-                f'outputs'
+                #f'outputs_{i}'
                 #path
             )
             print(f'\tjob_{i}.py created')
             create_job_shell_file(
-                f'job_{i}.sh',
-                f'job_{i}.py'
+                filename=f'job_{i}.sh',
+                python_job_file=f'job_{i}.py'
             )
+            subprocess.run(['chmod','u+x',f'job_{i}.sh'])
             print(f'\tjob_{i}.sh created')
             create_submit_file(
                 filename=f'submit_{i}.sh',
                 executable=f'job_{i}.sh',
-                output=f"outputs"
+                input=f'{pwd}/Batch/job_{i}.py,{pwd}/processor_mHrecoil.py',
+                output=f'singularity.log.job_{i},{output_filename}'#, outputs_{i}'
+                #output='outputs'
             )
+            subprocess.run(['chmod','u+x',f'submit_{i}.sh'])
             print(f'\tsubmit_{i}.sh created')
             #p = subprocess.check_output(["/usr/bin/condor_submit",f"submit_{i}.sh"])
             #time.sleep(1)

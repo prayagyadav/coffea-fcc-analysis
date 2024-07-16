@@ -94,7 +94,8 @@ Cutflow.__add__ = add_cutflow #Monkey patch Cutflow class to enable the add meth
 #########################
 # Load the coffea files #
 #########################
-input_path = "outputs/FCCee/higgs/mH-recoil/mumu/"
+#input_path = "outputs/FCCee/higgs/mH-recoil/mumu/"
+input_path = "Batch/" #By default Batch outputs are saved here
 base_filename = "mHrecoil_mumu.coffea"
 print(f'Current configuration:\n\tinput_path:\t{input_path}\n\tbase_filename:\t{base_filename}\n')
 print("Loading coffea files...")
