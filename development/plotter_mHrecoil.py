@@ -1,3 +1,4 @@
+from matplotlib.ticker import MultipleLocator, AutoMinorLocator
 from coffea.analysis_tools import Cutflow
 import matplotlib.pyplot as plt
 from coffea.util import load
@@ -28,6 +29,17 @@ def lazy_summary(d,ntabs=1):
     print_string += tab+'}\n'
     return print_string
 
+def get_subdict(dicts, key):
+    '''
+    Get list of subdictionaries(if available) from a list of dictionaries
+    '''
+    out = []
+    for d in dicts:
+        for k in d.keys():
+            if key == k:
+                out.append(d[key])
+    return out
+
 def accumulate(dicts):
     """
     Merges an array of dictionaries and adds up the values of common keys.
@@ -38,23 +50,25 @@ def accumulate(dicts):
     Returns:
     dict: A dictionary with combined keys and values summed for common keys.
     """
-    outdict = {}
 
+    outdict = {}
+    
     for diction in dicts:
         dictionary = copy.deepcopy(diction)
         
         for key, value in dictionary.items():
             # print(f"{key} : {value}")
             # print(type(value))
-            if isinstance(value,dict):
-                value = accumulate([subdict[key] for subdict in dicts])
-                outdict[key] = value
-                continue
             
-            if key in outdict:
-                outdict[key] += value  # Add values if the key is common
+            if isinstance(value,dict):
+                value = accumulate(get_subdict(dicts,key))
+                outdict[key] = value 
             else:
-                outdict[key] = value  # Otherwise, add the new key-value pair 
+                if key in outdict.keys():
+                    outdict[key] += value  # Add values if the key is common
+                else:
+                    outdict[key] = value  # Otherwise, add the new key-value pair 
+
     return outdict
 
 def get_xsec_scale(dataset, raw_events, Luminosity):
@@ -483,10 +497,11 @@ def makeplot(fig, ax, hist, name, title, label, xlabel, ylabel, bins, xmin, xmax
         stack=stack,
         edgecolor='black',
         linewidth=1,
+        sort='yield',
         ax=ax
     )
 
-    ax.text(0.25, 1.02, 'FCC Analyses: FCC Simulation Delphes', fontsize=9, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
+    ax.text(0.25, 1.02, 'FCC Analyses: FCC-ee Simulation (Delphes)', fontsize=9, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
     ax.text(0.92, 1.02, '$\\sqrt{s} = 240GeV$', fontsize=9, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
 
     if  cutflow_mode:
@@ -496,13 +511,17 @@ def makeplot(fig, ax, hist, name, title, label, xlabel, ylabel, bins, xmin, xmax
         ax.set_ylabel(ylabel+per_bin+' [GeV]')
         plt.xlim([xmin,xmax])
         plt.xticks(np.linspace(xmin,xmax,xticks+1))
+        ax.xaxis.set_minor_locator(AutoMinorLocator(5))
     ax.set_xlabel(xlabel)
 
     if log :
         ax.set_yscale('log')
+        plt.tick_params(axis='y', which='minor')
+    else:
+        ax.yaxis.set_minor_locator(AutoMinorLocator(5))
 
     ax.set_title(title,pad=25,  fontsize= "15", color="#192655")
-
+    
     if cutflow_mode:
         fig.legend(prop={"size":10},loc= (0.74,0.74) )
 
