@@ -8,6 +8,6 @@ fi
 
 echo "Coffea Image: ${COFFEA_IMAGE}"
 
-EXTERNAL_BIND=${PWD} singularity exec -B ${PWD}:/srv -B /etc/condor -B /eos -B /afs -B /cvmfs --pwd /srv \
+EXTERNAL_BIND=${PWD} singularity exec -B /etc/condor -B /eos -B /afs -B /cvmfs --pwd ${PWD} \
 	/cvmfs/unpacked.cern.ch/registry.hub.docker.com/${COFFEA_IMAGE} \
 	/bin/bash --rcfile /srv/.bashrc

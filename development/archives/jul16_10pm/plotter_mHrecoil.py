@@ -1,153 +1,20 @@
-from matplotlib.ticker import MultipleLocator, AutoMinorLocator
-from coffea.analysis_tools import Cutflow
-import matplotlib.pyplot as plt
 from coffea.util import load
+import matplotlib.pyplot as plt
 import mplhep as hep
-import pandas as pd
-import numpy as np
-import  collections
-import hist
-import copy
-import glob
 import os
-import re
-
-####################
-def lazy_summary(d,ntabs=1):
-    tab = '\t'*ntabs
-    print_string ='{\n'
-    for key,value in d.items():
-        print_string += f"{tab}{key} : "
-        if isinstance(value,dict):
-            print_string += lazy_summary(value, ntabs=ntabs+1)
-        elif isinstance(value, hist.hist.Hist):
-            print_string += f"{type(value)}\tIntegral:{value.sum()}\n"
-        elif isinstance(value, Cutflow):
-            print_string += f"{type(value)}\tInitial events:{value.result().nevcutflow[0]}\n"
-        else :
-            print_string += f"{type(value)}\n"
-    print_string += tab+'}\n'
-    return print_string
-
-def get_subdict(dicts, key):
-    '''
-    Get list of subdictionaries(if available) from a list of dictionaries
-    '''
-    out = []
-    for d in dicts:
-        for k in d.keys():
-            if key == k:
-                out.append(d[key])
-    return out
-
-def accumulate(dicts):
-    """
-    Merges an array of dictionaries and adds up the values of common keys.
-
-    Parameters:
-    dicts (list): A list of dictionaries to be merged.
-
-    Returns:
-    dict: A dictionary with combined keys and values summed for common keys.
-    """
-
-    outdict = {}
-    
-    for diction in dicts:
-        dictionary = copy.deepcopy(diction)
-        
-        for key, value in dictionary.items():
-            # print(f"{key} : {value}")
-            # print(type(value))
-            
-            if isinstance(value,dict):
-                value = accumulate(get_subdict(dicts,key))
-                outdict[key] = value 
-            else:
-                if key in outdict.keys():
-                    outdict[key] += value  # Add values if the key is common
-                else:
-                    outdict[key] = value  # Otherwise, add the new key-value pair 
-
-    return outdict
-
-def get_xsec_scale(dataset, raw_events, Luminosity):
-    xsec = cross_sections[dataset] #in per picobarn
-    if raw_events > 0:
-        sf = (xsec*Luminosity)/raw_events
-    else :
-        raise 'Raw events less than of equal to zero!'
-    return sf
-
-def add_cutflow(c1,c2):
-    '''
-    Add cutflow objects assuming they operate on non-overlaping sample regions
-    '''
-    r1 = c1.result()
-    r2 = c2.result()
-
-
-    if r1.labels == r2.labels :
-        names = r1.labels
-        names.remove('initial') # initial is added when Cutflow class is called, so removing it to preserve names list length
-        names = names
-        nevonecut = [a+b for a,b in zip(r1.nevonecut,r2.nevonecut)]
-        nevcutflow = [a+b for a,b in zip(r1.nevcutflow,r2.nevcutflow)]
-        masksonecut = [np.concatenate((a,b)) for a,b in zip(r1.masksonecut,r2.masksonecut)]
-        maskscutflow = [np.concatenate((a,b)) for a,b in zip(r1.maskscutflow,r2.maskscutflow)]
-        
-    else:
-        raise "The labels of the cutflow do not match!"
-    return Cutflow(names, nevonecut, nevcutflow, masksonecut, maskscutflow, delayed_mode=False)
-
-Cutflow.__add__ = add_cutflow #Monkey patch Cutflow class to enable the add method
-
-####################
+import numpy as np
+import pandas as pd
+import  collections
 
 
 #########################
 # Load the coffea files #
 #########################
-#input_path = "outputs/FCCee/higgs/mH-recoil/mumu/"
-input_path = "Batch/" #By default Batch outputs are saved here
-base_filename = "mHrecoil_mumu.coffea"
-print(f'Current configuration:\n\tinput_path:\t{input_path}\n\tbase_filename:\t{base_filename}\n')
 print("Loading coffea files...")
+input_path = "outputs/FCCee/higgs/mH-recoil/mumu/"
+filename = "mHrecoil_mumu.coffea"
+input = load(input_path+filename)
 
-#Find coffea files
-coffea_files = glob.glob(input_path+'*.coffea')
-print('Detected coffea files:')
-for file in coffea_files : print('\t'+file)
-
-print(f'Choosing:\n\t{base_filename}')
-
-#Find chunked coffea files
-chunked_coffea_files = glob.glob(input_path+base_filename.strip('.coffea')+'-chunk*.coffea')
-
-if len(chunked_coffea_files) != 0 :
-    print('Joining chunks:')
-    chunk_index_list = []
-    chunk_list = []
-    for file in chunked_coffea_files:
-        print('\t'+file)
-        chunk_list.append(file)
-        chunk_index_list.append(int(re.search('-chunk(.*).coffea',file).group(1)))
-    chunk_index_list.sort()
-    
-    #Check if there are missing chunks
-    full_set = set(range(len(chunk_index_list)))
-    lst_set = set(chunk_index_list)
-    missing = list(full_set - lst_set)
-    if len(missing) != 0:
-        raise FileNotFoundError(f'Missing chunk indexes : {missing}')
-    
-    #Load and accumulate all the chunks
-    input_list = [load(file) for file in chunk_list]
-    input = accumulate(input_list)
-else : 
-    input = load(input_path+base_filename)
-
-# print(lazy_summary(input))
 
 ###################
 # Plot Properties #
@@ -205,7 +72,33 @@ print("Plotting...")
 if not os.path.exists(plot_path):
     os.makedirs(plot_path)
 
+def get_xsec_scale(dataset, raw_events, Luminosity):
+    xsec = cross_sections[dataset] #in per picobarn
+    if raw_events > 0:
+        sf = (xsec*Luminosity)/raw_events
+    else :
+        raise 'Raw events less than of equal to zero!'
+    return sf
 
+def accumulate(dicts):
+    """
+    Merges an array of dictionaries and adds up the values of common keys.
+
+    Parameters:
+    dicts (list): A list of dictionaries to be merged.
+
+    Returns:
+    dict: A dictionary with combined keys and values summed for common keys.
+    """
+    dict = {}
+
+    for dictionary in dicts:
+        for key, value in dictionary.items():
+            if key in dict:
+                dict[key] += value  # Add values if the key is common
+            else:
+                dict[key] = value  # Otherwise, add the new key-value pair 
+    return dict
 
 def get_cutflow_props(object_list, **kwargs):
     '''
@@ -497,11 +390,10 @@ def makeplot(fig, ax, hist, name, title, label, xlabel, ylabel, bins, xmin, xmax
         stack=stack,
         edgecolor='black',
         linewidth=1,
-        sort='yield',
         ax=ax
     )
 
-    ax.text(0.25, 1.02, 'FCC Analyses: FCC-ee Simulation (Delphes)', fontsize=9, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
+    ax.text(0.25, 1.02, 'FCC Analyses: FCC Simulation Delphes', fontsize=9, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
     ax.text(0.92, 1.02, '$\\sqrt{s} = 240GeV$', fontsize=9, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
 
     if  cutflow_mode:
@@ -511,17 +403,13 @@ def makeplot(fig, ax, hist, name, title, label, xlabel, ylabel, bins, xmin, xmax
         ax.set_ylabel(ylabel+per_bin+' [GeV]')
         plt.xlim([xmin,xmax])
         plt.xticks(np.linspace(xmin,xmax,xticks+1))
-        ax.xaxis.set_minor_locator(AutoMinorLocator(5))
     ax.set_xlabel(xlabel)
 
     if log :
         ax.set_yscale('log')
-        plt.tick_params(axis='y', which='minor')
-    else:
-        ax.yaxis.set_minor_locator(AutoMinorLocator(5))
 
     ax.set_title(title,pad=25,  fontsize= "15", color="#192655")
-    
+
     if cutflow_mode:
         fig.legend(prop={"size":10},loc= (0.74,0.74) )
 
