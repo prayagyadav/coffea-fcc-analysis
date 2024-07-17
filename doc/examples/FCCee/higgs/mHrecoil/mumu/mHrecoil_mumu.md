@@ -1,22 +1,24 @@
 # mHrecoil mumu 
 
 ## Description
-
-Alias : ZH Recoil Example
-Process : $ZH \rightarrow \mu^+ \mu^- + Recoil $ 
-Backgrounds : ZZ , WW
-Datasets used : Collider : FCCee
-                Detector : IDEA
-                Generation: Spring2021
-                Samples : p8_ee_ZH_ecm240, p8_ee_ZZ_ecm240, p8_ee_WW_ecm240
+|||
+|-------|-------------------|
+| **Alias** | ZH Recoil Example|
+| **Process** | {math}`e^+e^- \rightarrow ZH \rightarrow \mu^+ \mu^- + Recoil` |
+| **Backgrounds** | ZZ , WW |
+| **Datasets** | **Collider** : FCCee |
+|               | **Detector** : IDEA |
+|               | **Generation** : Spring2021 |
+|               | **Samples** : `p8_ee_ZH_ecm240`, `p8_ee_ZZ_ecm240`, `p8_ee_WW_ecm240` |
 
 ## Prerequisite setup
 Example Analyses are separated into these files:
-- processor_<example_name>.py
-- runner_<example_name>.py
-- plotter_<example_name>.py
+- `processor_<example_name>.py`
+- `runner_<example_name>.py`
+- `plotter_<example_name>.py`
 
 A. Clone the [coffea-fcc-analyses](https://github.com/prayagyadav/coffea-fcc-analyses.git) repository.
+
 B. `cd coffea-fcc-analyses`
 
 ## ZH Recoil Example:
