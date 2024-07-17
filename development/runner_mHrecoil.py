@@ -32,7 +32,7 @@ if __name__=="__main__":
     }
     output_file = "mHrecoil_mumu.coffea"
     path = 'outputs/FCCee/higgs/mH-recoil/mumu/'
-    
+
     def load_yaml_fileinfo(process):
         '''
         Loads the yaml data for filesets
@@ -61,7 +61,7 @@ if __name__=="__main__":
                     dict = yaml.safe_load(f)
                 print('Loaded : '+full_path)
             except:
-                raise f'Could not find yaml files at {filesystem_path} .'
+                raise FileNotFoundError('Could not find yaml files at {filesystem_path}')
             yaml_dict[sample] = dict
         return yaml_dict
 
@@ -81,7 +81,7 @@ if __name__=="__main__":
             # sumofweights = yaml_dict[key]['merge']['sumofweights']
             out = np.array(outfiles)
             bad = np.array(outfilesbad)
-            
+
             # Remove bad files
             if (bad.size != 0) & skipbadfiles :
                 filenames_bad = bad[:,0]
@@ -91,19 +91,19 @@ if __name__=="__main__":
                     if file in filenames_bad:
                         y = np.delete(y , (row), axis=0)
                 out = y
-    
+
             filenames = out[:,0]
             file_events = out[:,1].astype('int32')
             cumulative_events = np.cumsum(file_events)
-        
+
             frac = fraction[proc]
             needed_events = frac*nevents
-    
+
             #get closest value and index to the needed events
-            index = np.abs(cumulative_events - needed_events).argmin() 
+            index = np.abs(cumulative_events - needed_events).argmin()
             assigned_events = cumulative_events[index]
             assigned_files = filenames[:index+1]
-    
+
             # Summary
             print('----------------------------------')
             print(f'----------{key}---------')
@@ -114,7 +114,7 @@ if __name__=="__main__":
             print(f'Assigned events = {assigned_events}')
             print(f'Number of files = {len(assigned_files)}')
             print('Files:')
-    
+
             # At the same time get the dictionary
             fileset_by_key = {}
             for file in assigned_files:
@@ -127,7 +127,7 @@ if __name__=="__main__":
         '''
         Split a given fileset into n almost even filesets
         '''
-        
+
         # Create an indexed fileset
         fileset = copy.deepcopy(input_fileset)
         index = 0
@@ -135,7 +135,7 @@ if __name__=="__main__":
             for filename,treename in input_fileset[dataset]['files'].items():
                 fileset[dataset]['files'][filename] = {'treename': treename, 'index': index}
                 index += 1
-    
+
         # Split the array as required
         nfiles = sum([len(fileset[dataset]['files']) for dataset in fileset.keys()])
         if n == 0 :
@@ -144,7 +144,7 @@ if __name__=="__main__":
             index_split = np.array_split(np.arange(nfiles),n)
         else :
             raise ValueError(f'Allowed values of n between 0 and {index}')
-    
+
         # Choose the required indices for each split
         raw = [copy.deepcopy(input_fileset) for i in range(n)]
         for f in range(n):
@@ -152,14 +152,14 @@ if __name__=="__main__":
                 for event in fileset[dataset]['files'].keys():
                     if not fileset[dataset]['files'][event]['index'] in index_split[f]:
                         del raw[f][dataset]['files'][event]
-    
+
         #remove empty fields
         out = copy.deepcopy(raw)
         for f in range(n):
             for dataset in raw[f].keys():
                 if len(raw[f][dataset]['files']) == 0 :
                     del out[f][dataset]
-    
+
         return out
 
     def create_job_python_file(dataset_runnable, maxchunks,filename, output_file):#, path):
@@ -234,7 +234,7 @@ queue 1'''
     ##############################
     # Define the terminal inputs #
     ##############################
-    
+
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-e",
@@ -258,7 +258,7 @@ queue 1'''
         type=int,
         default=1
         )
-    
+
     inputs = parser.parse_args()
 
     raw_yaml = load_yaml_fileinfo(process)
@@ -272,7 +272,7 @@ queue 1'''
     print('Preparing fileset before run...')
 
     pwd = os.getcwd()
-    
+
     dataset_runnable, dataset_updated = zip(*[preprocess(
         fl,
         align_clusters=False,
@@ -282,7 +282,7 @@ queue 1'''
         save_form=False,
     ) for fl in fileset ]
                                            )
-    
+
     #For local dask execution
     if inputs.executor == "dask" :
         if not os.path.exists(path):
@@ -348,5 +348,5 @@ queue 1'''
         subprocess.run(['chmod','u+x','condor.sh'])
         print('condor.sh created')
         print(f'Action Needed: All the job files created; To submit them, move to the {batch_dir} directory and run ./condor.sh without getting into the singularity container shell.')
-            
+
         os.chdir('../')
