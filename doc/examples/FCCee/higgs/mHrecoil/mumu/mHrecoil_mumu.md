@@ -34,7 +34,8 @@ B. `cd coffea-fcc-analyses`
    ./shell
    ```
    
-3. A] Local Execution
+3. **A] Local Execution**
+   
      Within the shell execute runner_mHrecoil.py with the desired parameters(--executor or -e set to dask by default). The output file would be saved at ./output/FCCee/higgs/mH-recoil/mumu/.
       ```bash
       singularity> python3 runner_mHrecoil.py -e dask
@@ -44,7 +45,8 @@ B. `cd coffea-fcc-analyses`
       singularity> python3 runner_mHrecoil.py -e dask -c 8
       ```
       
-     B] Batch Execution with HTCondor
+     **B] Batch Execution with HTCondor**
+   
      Choosing the executor as condor one can generate job and submit files and a master submit file called condor.sh
       ```bash
       singularity> python3 runner_mHrecoil.py -e condor -c 8
@@ -56,7 +58,7 @@ B. `cd coffea-fcc-analyses`
      ./condor.sh
      ```
      
-4. Generate plots with plotter_mHrecoil.py (from the singularity shell). The plots would be saved at ./output/FCCee/higgs/mH-recoil/mumu/plots/
+5. Generate plots with plotter_mHrecoil.py (from the singularity shell). The plots would be saved at ./output/FCCee/higgs/mH-recoil/mumu/plots/
    ```bash
    singularity> python3 plotter_mHrecoil.py
    ```
