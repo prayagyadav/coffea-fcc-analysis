@@ -1,16 +1,42 @@
 from coffea import processor
 from coffea.analysis_tools import PackedSelection
 import awkward as ak
+import pandas as pd
 import hist
 import numba
 import vector
 vector.register_awkward()
 
+##############################################
+# Define plot properties
+plot_props = pd.DataFrame({
+    'Zm':{'name':'Zm','title':'Z Candidate mass','xlabel':'$Z_{mass}$ [GeV]','ylabel':'Events','bins':100,'xmin':0,'xmax':250,'color':'g','histtype':'fill'},
+    'Zm_zoom':{'name':'Zm_zoom','title':'Z Candidate mass','xlabel':'$Z_{mass}$ [GeV]','ylabel':'Events','bins':40,'xmin':80,'xmax':100,'color':'g','histtype':'fill'},
+    'Recoilm':{'name':'Recoilm','title':'Leptonic Recoil mass','xlabel':'$Recoil_{mass}$ [GeV]','ylabel':'Events','bins':100,'xmin':0,'xmax':200,'color':'r','histtype':'fill'},
+    'Recoilm_zoom':{'name':'Recoilm_zoom','title':'Leptonic Recoil mass','xlabel':'$Recoil_{mass}$ [GeV]','ylabel':'Events','bins':200,'xmin':80,'xmax':160,'color':'r','histtype':'fill'},
+    'Recoilm_zoom1':{'name':'Recoilm_zoom1','title':'Leptonic Recoil mass','xlabel':'$Recoil_{mass}$ [GeV]','ylabel':'Events','bins':100,'xmin':120,'xmax':140,'color':'r','histtype':'fill'},
+    'Recoilm_zoom2':{'name':'Recoilm_zoom2','title':'Leptonic Recoil mass','xlabel':'$Recoil_{mass}$ [GeV]','ylabel':'Events','bins':200,'xmin':120,'xmax':140,'color':'r','histtype':'fill'},
+    'Recoilm_zoom3':{'name':'Recoilm_zoom3','title':'Leptonic Recoil mass','xlabel':'$Recoil_{mass}$ [GeV]','ylabel':'Events','bins':400,'xmin':120,'xmax':140,'color':'r','histtype':'fill'},
+    'Recoilm_zoom4':{'name':'Recoilm_zoom4','title':'Leptonic Recoil mass','xlabel':'$Recoil_{mass}$ [GeV]','ylabel':'Events','bins':800,'xmin':120,'xmax':140,'color':'r','histtype':'fill'},
+    'Recoilm_zoom5':{'name':'Recoilm_zoom5','title':'Leptonic Recoil mass','xlabel':'$Recoil_{mass}$ [GeV]','ylabel':'Events','bins':2000,'xmin':120,'xmax':140,'color':'r','histtype':'fill'},
+    'Recoilm_zoom6':{'name':'Recoilm_zoom6','title':'Leptonic Recoil mass','xlabel':'$Recoil_{mass}$ [GeV]','ylabel':'Events','bins':100,'xmin':130.3,'xmax':140,'color':'r','histtype':'fill'}
+})
+def get_1Dhist(name, var, flatten=True):
+    '''
+    name: eg. Zm
+    var: eg. variable containing array of mass of Z
+    flatten: If to flatten var before fill; True by default
+    Returns a histogram
+    '''
+    props = plot_props[name]
+    if flatten : var = ak.flatten(var)
+    return hist.Hist.new.Reg(props.bins, props.xmin, props.xmax).Double().fill(var)
 
+##############################################
 def index_mask(input_array, index_array):
     '''
     This function matches the given attribute of ReconstructedParticles (for example energy) to the particle index (for example Muon or Electron).
-    Note: Input and output are both awkward.Array; dask_awkward is not supported at this moment 
+    Note: Input and output are both awkward.Array; dask_awkward is not supported at this moment
     '''
     if len(input_array) != len(index_array) :
         raise Exception(f'Length of input_array({len(input_array)}) and index_array({len(index_array)}) does not match!')
@@ -28,7 +54,7 @@ def index_mask(input_array, index_array):
 
     return out
 
-
+###############################################
 #Begin the processor definition
 class mHrecoil(processor.ProcessorABC):
     '''
@@ -62,7 +88,7 @@ class mHrecoil(processor.ProcessorABC):
         Muon_q = index_mask(Reco_q,Muon_index)
         Muon_mass = index_mask(Reco_mass,Muon_index)
 
-        # Create Array of Muon Lorentz Vector 
+        # Create Array of Muon Lorentz Vector
         Muon = ak.zip({"px":Muon_px,"py":Muon_py,"pz":Muon_pz,"E":Muon_E,"q":Muon_q,}, with_name="Momentum4D")
 
         # Muon pt > 10
@@ -109,32 +135,14 @@ class mHrecoil(processor.ProcessorABC):
         sel1 = cut.cutflow(*sel1_list)
 
         #Prepare output
+        #Choose the required histograms and their assigned variables to fill
+        names = ['Zm','Zm_zoom','Recoilm','Recoilm_zoom','Recoilm_zoom1','Recoilm_zoom2','Recoilm_zoom3','Recoilm_zoom4','Recoilm_zoom5','Recoilm_zoom6']
+        vars_sel0 = ([Z_cand.mass]*2) + ([Recoil.mass]*8)
+        vars_sel1 = ([Z_cand_sel1.mass]*2) + ([Recoil_sel1.mass]*8)
         Output = {
             'histograms': {
-                'sel0': {
-                'Zm': hist.Hist.new.Regular(125,0,250).Double().fill(ak.flatten(Z_cand.mass)),
-                'Zm_zoom' : hist.Hist.new.Regular(40,80,100).Double().fill(ak.flatten(Z_cand.mass)),
-                'Recoilm': hist.Hist.new.Regular(100,0,200).Double().fill(ak.flatten(Recoil.mass)),
-                'Recoilm_zoom' : hist.Hist.new.Regular(200,80,160).Double().fill(ak.flatten(Recoil.mass)),
-                'Recoilm_zoom1' : hist.Hist.new.Regular(100,120,140).Double().fill(ak.flatten(Recoil.mass)),
-                'Recoilm_zoom2' : hist.Hist.new.Regular(200,120,140).Double().fill(ak.flatten(Recoil.mass)),
-                'Recoilm_zoom3' : hist.Hist.new.Regular(400,120,140).Double().fill(ak.flatten(Recoil.mass)),
-                'Recoilm_zoom4' : hist.Hist.new.Regular(800,120,140).Double().fill(ak.flatten(Recoil.mass)),
-                'Recoilm_zoom5' : hist.Hist.new.Regular(2000,120,140).Double().fill(ak.flatten(Recoil.mass)),
-                'Recoilm_zoom6' : hist.Hist.new.Regular(100,130.3,132.5).Double().fill(ak.flatten(Recoil.mass))
-                },
-                'sel1': {
-                'Zm': hist.Hist.new.Regular(125,0,250).Double().fill(ak.flatten(Z_cand_sel1.mass)),
-                'Zm_zoom' : hist.Hist.new.Regular(40,80,100).Double().fill(ak.flatten(Z_cand_sel1.mass)),
-                'Recoilm': hist.Hist.new.Regular(100,0,200).Double().fill(ak.flatten(Recoil_sel1.mass)),
-                'Recoilm_zoom' : hist.Hist.new.Regular(200,80,160).Double().fill(ak.flatten(Recoil_sel1.mass)),
-                'Recoilm_zoom1' : hist.Hist.new.Regular(100,120,140).Double().fill(ak.flatten(Recoil_sel1.mass)),
-                'Recoilm_zoom2' : hist.Hist.new.Regular(200,120,140).Double().fill(ak.flatten(Recoil_sel1.mass)),
-                'Recoilm_zoom3' : hist.Hist.new.Regular(400,120,140).Double().fill(ak.flatten(Recoil_sel1.mass)),
-                'Recoilm_zoom4' : hist.Hist.new.Regular(800,120,140).Double().fill(ak.flatten(Recoil_sel1.mass)),
-                'Recoilm_zoom5' : hist.Hist.new.Regular(2000,120,140).Double().fill(ak.flatten(Recoil_sel1.mass)),
-                'Recoilm_zoom6' : hist.Hist.new.Regular(100,130.3,132.5).Double().fill(ak.flatten(Recoil_sel1.mass))
-                }
+                'sel0':{name:get_1Dhist(name,var) for name,var in zip(names,vars_sel0)},
+                'sel1':{name:get_1Dhist(name,var) for name,var in zip(names,vars_sel1)}
             },
             'cutflow': { #cutflow objects
                 'sel0': sel0,

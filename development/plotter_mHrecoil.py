@@ -2,6 +2,7 @@ from matplotlib.ticker import MultipleLocator, AutoMinorLocator
 from coffea.analysis_tools import Cutflow
 import matplotlib.pyplot as plt
 from coffea.util import load
+from processor_mHrecoil import plot_props
 import mplhep as hep
 import pandas as pd
 import numpy as np
@@ -77,7 +78,7 @@ def get_xsec_scale(dataset, raw_events, Luminosity):
     if raw_events > 0:
         sf = (xsec*Luminosity)/raw_events
     else :
-        raise 'Raw events less than of equal to zero!'
+        raise ValueError('Raw events less than of equal to zero!')
     return sf
 
 def add_cutflow(c1,c2):
@@ -98,7 +99,7 @@ def add_cutflow(c1,c2):
         maskscutflow = [np.concatenate((a,b)) for a,b in zip(r1.maskscutflow,r2.maskscutflow)]
 
     else:
-        raise "The labels of the cutflow do not match!"
+        raise KeyError("The labels of the cutflow do not match!")
     return Cutflow(names, nevonecut, nevcutflow, masksonecut, maskscutflow, delayed_mode=False)
 
 Cutflow.__add__ = add_cutflow #Monkey patch Cutflow class to enable the add method
@@ -161,37 +162,6 @@ if len(chunked_coffea_files) != 0 :
 else :
     input = load(input_path+base_filename)
 
-# print(lazy_summary(input))
-
-###################
-# Plot Properties #
-###################
-plot_props = {
-    'Zm':{'name':'Zm','title':'Z Candidate mass','xlabel':'$Z_{mass}$ [GeV]','ylabel':'Events','bins':100,'xmin':0,'xmax':250,'color':'g','histtype':'fill'},
-    'Zm_zoom':{'name':'Zm_zoom','title':'Z Candidate mass','xlabel':'$Z_{mass}$ [GeV]','ylabel':'Events','bins':40,'xmin':80,'xmax':100,'color':'g','histtype':'fill'},
-    'Recoilm':{'name':'Recoilm','title':'Leptonic Recoil mass','xlabel':'$Recoil_{mass}$ [GeV]','ylabel':'Events','bins':100,'xmin':0,'xmax':200,'color':'r','histtype':'fill'},
-    'Recoilm_zoom':{'name':'Recoilm_zoom','title':'Leptonic Recoil mass','xlabel':'$Recoil_{mass}$ [GeV]','ylabel':'Events','bins':200,'xmin':80,'xmax':160,'color':'r','histtype':'fill'},
-    'Recoilm_zoom1':{'name':'Recoilm_zoom1','title':'Leptonic Recoil mass','xlabel':'$Recoil_{mass}$ [GeV]','ylabel':'Events','bins':100,'xmin':120,'xmax':140,'color':'r','histtype':'fill'},
-    'Recoilm_zoom2':{'name':'Recoilm_zoom2','title':'Leptonic Recoil mass','xlabel':'$Recoil_{mass}$ [GeV]','ylabel':'Events','bins':200,'xmin':120,'xmax':140,'color':'r','histtype':'fill'},
-    'Recoilm_zoom3':{'name':'Recoilm_zoom3','title':'Leptonic Recoil mass','xlabel':'$Recoil_{mass}$ [GeV]','ylabel':'Events','bins':400,'xmin':120,'xmax':140,'color':'r','histtype':'fill'},
-    'Recoilm_zoom4':{'name':'Recoilm_zoom4','title':'Leptonic Recoil mass','xlabel':'$Recoil_{mass}$ [GeV]','ylabel':'Events','bins':800,'xmin':120,'xmax':140,'color':'r','histtype':'fill'},
-    'Recoilm_zoom5':{'name':'Recoilm_zoom5','title':'Leptonic Recoil mass','xlabel':'$Recoil_{mass}$ [GeV]','ylabel':'Events','bins':2000,'xmin':120,'xmax':140,'color':'r','histtype':'fill'},
-    'Recoilm_zoom6':{'name':'Recoilm_zoom6','title':'Leptonic Recoil mass','xlabel':'$Recoil_{mass}$ [GeV]','ylabel':'Events','bins':100,'xmin':130.3,'xmax':140,'color':'r','histtype':'fill'}
-}
-props = pd.DataFrame(plot_props)
-
-# cross_sections = { # Taken as is from https://github.com/HEP-FCC/FCCAnalyses/blob/master/examples/FCCee/higgs/mH-recoil/histmaker_mumu.py#L7
-#     'p8_ee_WW_ecm240': 0.25792,
-#     'p8_ee_ZZ_ecm240': 2 * 1.35899 * 0.034 * 0.152,
-#     'p8_ee_ZH_ecm240': 0.201868 * 0.034
-# }
-
-cross_sections = {#in pb-1 # Taken as is from FCC events catalogue at https://fcc-physics-events.web.cern.ch/FCCee/spring2021/Delphesevents_IDEA.php
-    'p8_ee_WW_ecm240': 16.4385,
-    'p8_ee_ZZ_ecm240': 1.35899,
-    'p8_ee_ZH_ecm240': 0.201868
-}
-
 ##################################
 # Choose the required plots here #
 ##################################
@@ -204,6 +174,11 @@ req_hists = {
     "ZH":{"type":'Signal',"datasets":['p8_ee_ZH_ecm240'],"color":'r'},
     "ZZ":{"type":'Background',"datasets":['p8_ee_ZZ_ecm240'],"color":'g'},
     "WW":{"type":'Background',"datasets":['p8_ee_WW_ecm240'],"color":'b'}
+}
+cross_sections = {#in pb-1 # Taken as is from FCC events catalogue at https://fcc-physics-events.web.cern.ch/FCCee/spring2021/Delphesevents_IDEA.php
+    'p8_ee_WW_ecm240': 16.4385,
+    'p8_ee_ZZ_ecm240': 1.35899,
+    'p8_ee_ZH_ecm240': 0.201868
 }
 plot_path = 'outputs/FCCee/higgs/mH-recoil/mumu/plots/'
 intLumi        = 5.0e+06 #in pb-1
@@ -244,7 +219,7 @@ def get_cutflow_props(object_list, **kwargs):
             onecut_list.append(sf*onecut_hist)
             cutflow_list.append(sf*cutflow_hist)
         else :
-            raise "The labels of cutflow objects do not match."
+            raise ValueError("The labels of cutflow objects do not match.")
     nevonecut = sum(nevonecut_list)
     nevcutflow = sum(nevcutflow_list)
     onecut = sum(onecut_list)
@@ -430,7 +405,7 @@ def plots(input_dict, req_hists, req_plots, selections, stack, log, formats, pat
                 color_list.append(color)
                 hist_list.append(accumulate(hists))
             else:
-                raise 'Unrecognised type in req_hists'
+                raise TypeError('Unrecognised type in req_hists')
 
         plot_path_selection = path+sel+'/'
         if not os.path.exists(plot_path_selection):
@@ -440,7 +415,7 @@ def plots(input_dict, req_hists, req_plots, selections, stack, log, formats, pat
             hist = [hists[hist_name] for hists in hist_list]
             hist_signal = [hists[hist_name] for hists in hist_list_signal]
 
-            print(hist_name, ' : ', props[hist_name].title)
+            print(hist_name, ' : ', plot_props[hist_name].title)
             print('---------------------------------------------------------------')
             for log_mode in log :
                 for stack_mode in stack:
@@ -450,18 +425,18 @@ def plots(input_dict, req_hists, req_plots, selections, stack, log, formats, pat
                         fig=fig,
                         ax=ax,
                         hist=hist,
-                        name=props[hist_name].name,
-                        title=props[hist_name].title,
+                        name=plot_props[hist_name].name,
+                        title=plot_props[hist_name].title,
                         label=label_list,
-                        xlabel=props[hist_name].xlabel,
-                        ylabel=props[hist_name].ylabel,
-                        bins=props[hist_name].bins,
-                        xmin=props[hist_name].xmin,
-                        xmax=props[hist_name].xmax,
+                        xlabel=plot_path[hist_name].xlabel,
+                        ylabel=plot_props[hist_name].ylabel,
+                        bins=plot_props[hist_name].bins,
+                        xmin=plot_props[hist_name].xmin,
+                        xmax=plot_props[hist_name].xmax,
                         log=log_mode,
                         stack=True, #Always stack backgrounds
                         color=color_list,
-                        histtype=props[hist_name].histtype,
+                        histtype='fill',
                     )
                     #Signal
                     if stack_mode :
@@ -489,7 +464,7 @@ def plots(input_dict, req_hists, req_plots, selections, stack, log, formats, pat
                     else :
                         stack_mode_text = 'unstacked'
                     for format in formats :
-                        filename = props[hist_name].name+'_'+log_mode_text+'_'+stack_mode_text+'.'+format
+                        filename = plot_props[hist_name].name+'_'+log_mode_text+'_'+stack_mode_text+'.'+format
                         full_name = plot_path_selection+filename
                         fig.savefig(full_name,dpi=240);
                         print(filename, " saved at ", plot_path_selection)
