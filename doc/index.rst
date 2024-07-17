@@ -10,4 +10,4 @@ Welcome to COFFEA-FCC Examples!
    :maxdepth: 2
    :caption: Contents:
 
-   mHrecoil.md
+   examples.md
