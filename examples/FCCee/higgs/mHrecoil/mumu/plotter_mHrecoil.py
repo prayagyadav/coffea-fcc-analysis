@@ -6,6 +6,7 @@ import mplhep as hep
 import pandas as pd
 import numpy as np
 import  collections
+import argparse
 import hist
 import copy
 import glob
@@ -52,22 +53,22 @@ def accumulate(dicts):
     """
 
     outdict = {}
-    
+
     for diction in dicts:
         dictionary = copy.deepcopy(diction)
-        
+
         for key, value in dictionary.items():
             # print(f"{key} : {value}")
             # print(type(value))
-            
+
             if isinstance(value,dict):
                 value = accumulate(get_subdict(dicts,key))
-                outdict[key] = value 
+                outdict[key] = value
             else:
                 if key in outdict.keys():
                     outdict[key] += value  # Add values if the key is common
                 else:
-                    outdict[key] = value  # Otherwise, add the new key-value pair 
+                    outdict[key] = value  # Otherwise, add the new key-value pair
 
     return outdict
 
@@ -95,7 +96,7 @@ def add_cutflow(c1,c2):
         nevcutflow = [a+b for a,b in zip(r1.nevcutflow,r2.nevcutflow)]
         masksonecut = [np.concatenate((a,b)) for a,b in zip(r1.masksonecut,r2.masksonecut)]
         maskscutflow = [np.concatenate((a,b)) for a,b in zip(r1.maskscutflow,r2.maskscutflow)]
-        
+
     else:
         raise "The labels of the cutflow do not match!"
     return Cutflow(names, nevonecut, nevcutflow, masksonecut, maskscutflow, delayed_mode=False)
@@ -104,12 +105,25 @@ Cutflow.__add__ = add_cutflow #Monkey patch Cutflow class to enable the add meth
 
 ####################
 
+###################
+# Input arguments #
+###################
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "-i",
+    "--input",
+    help="Enter the input directory where the coffea files are saved",
+    default="outputs/FCCee/higgs/mH-recoil/mumu",
+    type=str
+)
+inputs = parser.parse_args()
 
 #########################
 # Load the coffea files #
 #########################
 #input_path = "outputs/FCCee/higgs/mH-recoil/mumu/"
-input_path = "Batch/" #By default Batch outputs are saved here
+# input_path = "Batch/" #By default Batch outputs are saved here
+input_path = inputs.input+"/"
 base_filename = "mHrecoil_mumu.coffea"
 print(f'Current configuration:\n\tinput_path:\t{input_path}\n\tbase_filename:\t{base_filename}\n')
 print("Loading coffea files...")
@@ -133,18 +147,18 @@ if len(chunked_coffea_files) != 0 :
         chunk_list.append(file)
         chunk_index_list.append(int(re.search('-chunk(.*).coffea',file).group(1)))
     chunk_index_list.sort()
-    
+
     #Check if there are missing chunks
     full_set = set(range(len(chunk_index_list)))
     lst_set = set(chunk_index_list)
     missing = list(full_set - lst_set)
     if len(missing) != 0:
         raise FileNotFoundError(f'Missing chunk indexes : {missing}')
-    
+
     #Load and accumulate all the chunks
     input_list = [load(file) for file in chunk_list]
     input = accumulate(input_list)
-else : 
+else :
     input = load(input_path+base_filename)
 
 # print(lazy_summary(input))
@@ -226,7 +240,7 @@ def get_cutflow_props(object_list, **kwargs):
         if res.labels == labels_list :
             nevonecut_list.append(sf*np.array(res.nevonecut))
             nevcutflow_list.append(sf*np.array(res.nevcutflow))
-            onecut_hist, cutflow_hist,l = object.yieldhist() 
+            onecut_hist, cutflow_hist,l = object.yieldhist()
             onecut_list.append(sf*onecut_hist)
             cutflow_list.append(sf*cutflow_hist)
         else :
@@ -257,7 +271,7 @@ def yield_plot(name, title, keys, cutflow_obs, formats, path):
 
     linespacing = 0.05
     for i in range(len(keys)):
-        datasets = req_hists[list(keys)[i]]['datasets'] 
+        datasets = req_hists[list(keys)[i]]['datasets']
         color = req_hists[list(keys)[i]]['color']
         yield_text = str(round(cutflow_obs[i].nevcutflow[-1],2))
         rawmc_text = str(round(cutflow_obs[i].nevcutflow[0],2))
@@ -521,7 +535,7 @@ def makeplot(fig, ax, hist, name, title, label, xlabel, ylabel, bins, xmin, xmax
         ax.yaxis.set_minor_locator(AutoMinorLocator(5))
 
     ax.set_title(title,pad=25,  fontsize= "15", color="#192655")
-    
+
     if cutflow_mode:
         fig.legend(prop={"size":10},loc= (0.74,0.74) )
 
