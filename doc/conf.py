@@ -37,5 +37,7 @@ html_theme_options = {
     "Documentation|https://prayagyadav.github.io/coffea-fcc-analyses",
     "Repository|https://github.com/prayagyadav/coffea-fcc-analyses",
     "Issues|https://github.com/prayagyadav/coffea-fcc-analyses/issues",
+    "COFFEA|https://github.com/CoffeaTeam/coffea",
+    "FCCAnalyses|https://github.com/HEP-FCC/FCCAnalyses"
   ])
 }
