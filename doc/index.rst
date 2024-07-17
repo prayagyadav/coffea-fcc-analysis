@@ -12,4 +12,4 @@ Welcome to COFFEA-FCC Analyses!
 
    setup.md
    examples.md
-   LICENSE.md
+   license.md
