@@ -27,8 +27,8 @@ if __name__=="__main__":
     }
     fraction = {
         'p8_ee_ZZ_ecm240':0.005,
-        'p8_ee_WW_ecm240':0.5,
-        'p8_ee_ZH_ecm240':0.2
+        'p8_ee_WW_ecm240':0.5*0.1,
+        'p8_ee_ZH_ecm240':0.2*0.1
     }
     output_file = "mHrecoil_mumu.coffea"
     path = 'outputs/FCCee/higgs/mH-recoil/mumu/'
@@ -38,7 +38,7 @@ if __name__=="__main__":
         Loads the yaml data for filesets
         '''
         onlinesystem_path = '/cvmfs/fcc.cern.ch'
-        localsystem_path = './../filesets/'
+        localsystem_path = './../../../../../filesets/'
         path = '/'.join(
             [
              'FCCDicts',
@@ -60,7 +60,6 @@ if __name__=="__main__":
                 with open(full_path) as f:
                     dict = yaml.safe_load(f)
                 print('Loaded : '+full_path)
-                # print(dict)
             except:
                 raise f'Could not find yaml files at {filesystem_path} .'
             yaml_dict[sample] = dict
@@ -271,8 +270,6 @@ queue 1'''
     ###################
 
     print('Preparing fileset before run...')
-    if not os.path.exists(path):
-        os.makedirs(path)
 
     pwd = os.getcwd()
     
@@ -286,9 +283,10 @@ queue 1'''
     ) for fl in fileset ]
                                            )
     
-    # print(dataset_runnable) # is a tuple
     #For local dask execution
     if inputs.executor == "dask" :
+        if not os.path.exists(path):
+            os.makedirs(path)
         Output = []
         print("Executing locally with dask ...")
         for i in range(len(dataset_runnable)):
@@ -329,8 +327,7 @@ queue 1'''
                 inputs.maxchunks,
                 f'job_{i}.py',
                 output_filename,
-                #f'outputs_{i}'
-                #path
+
             )
             print(f'\tjob_{i}.py created')
             create_job_shell_file(
@@ -343,8 +340,7 @@ queue 1'''
                 filename=f'submit_{i}.sh',
                 executable=f'job_{i}.sh',
                 input=f'{pwd}/{batch_dir}/job_{i}.py,{pwd}/processor_mHrecoil.py',
-                output=f'singularity.log.job_{i},{output_filename}'#, outputs_{i}'
-                #output='outputs'
+                output=f'singularity.log.job_{i},{output_filename}'
             )
             subprocess.run(['chmod','u+x',f'submit_{i}.sh'])
             print(f'\tsubmit_{i}.sh created')
@@ -352,7 +348,5 @@ queue 1'''
         subprocess.run(['chmod','u+x','condor.sh'])
         print('condor.sh created')
         print(f'Action Needed: All the job files created; To submit them, move to the {batch_dir} directory and run ./condor.sh without getting into the singularity container shell.')
-            #p = subprocess.check_output(["/usr/bin/condor_submit",f"submit_{i}.sh"])
-            #time.sleep(1)
-            #print(p)
-    os.chdir('../')
+            
+        os.chdir('../')
