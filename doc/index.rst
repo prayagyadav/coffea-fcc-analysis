@@ -10,4 +10,5 @@ Welcome to COFFEA-FCC Examples!
    :maxdepth: 2
    :caption: Contents:
 
+   setup.md
    examples.md
