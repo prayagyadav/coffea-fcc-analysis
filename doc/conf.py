@@ -6,7 +6,7 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'COFFEA FCC Examples'
+project = 'COFFEA FCC Analyses'
 copyright = 'Prayag Yadav'
 author = 'Prayag Yadav'
 release = '0.1'
