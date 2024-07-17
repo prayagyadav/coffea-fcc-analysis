@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to COFFEA-FCC Examples!
+Welcome to COFFEA-FCC Analyses!
 ===================================
 
 .. toctree::
@@ -12,3 +12,4 @@ Welcome to COFFEA-FCC Examples!
 
    setup.md
    examples.md
+   ../LICENSE
