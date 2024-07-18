@@ -71,8 +71,8 @@ if __name__=="__main__":
     }
     fraction = {
         'p8_ee_ZZ_ecm240':0.005,
-        'p8_ee_WW_ecm240':0.5*0.1,
-        'p8_ee_ZH_ecm240':0.2*0.1
+        'p8_ee_WW_ecm240':0.5,
+        'p8_ee_ZH_ecm240':0.2
     }
     output_file = inputs.outfile+".coffea"
     path = inputs.path
