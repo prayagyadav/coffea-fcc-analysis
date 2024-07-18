@@ -7,9 +7,8 @@ import numba
 import vector
 vector.register_awkward()
 
-##########################
-# Define plot properties #
-##########################
+##############################################
+# Define plot properties
 plot_props = pd.DataFrame({
     'Zm':{'name':'Zm','title':'Z Candidate mass','xlabel':'$Z_{mass}$ [GeV]','ylabel':'Events','bins':100,'xmin':0,'xmax':250},
     'Zm_zoom':{'name':'Zm_zoom','title':'Z Candidate mass','xlabel':'$Z_{mass}$ [GeV]','ylabel':'Events','bins':40,'xmin':80,'xmax':100},
@@ -33,6 +32,7 @@ def get_1Dhist(name, var, flatten=True):
     if flatten : var = ak.flatten(var)
     return hist.Hist.new.Reg(props.bins, props.xmin, props.xmax).Double().fill(var)
 
+##############################################
 def index_mask(input_array, index_array):
     '''
     This function matches the given attribute of ReconstructedParticles (for example energy) to the particle index (for example Muon or Electron).
@@ -54,9 +54,8 @@ def index_mask(input_array, index_array):
 
     return out
 
-#################################
-#Begin the processor definition #
-#################################
+###############################################
+#Begin the processor definition
 class mHrecoil(processor.ProcessorABC):
     '''
     mHrecoil example: e^+ + e^- rightarrow ZH rightarrow mu^+ mu^- + X(Recoil)

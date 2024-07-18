@@ -182,9 +182,213 @@ def yield_plot(name, title, keys, cutflow_obs, unscaled_cutflow_obs, formats, pa
         print(filename, " saved at ", path)
     plt.close()
 
-def plots(input_dict, req_hists, req_plots, selections, stack, log, formats, path, plotprops):
+def cutflow(input_dict, req_hists, selections, stack, log, formats, path):
     '''
-    Batch plot processor: Creates Yield, Cutflow and Kinematic plots
+    Create cutflow and yield plots
+    '''
+    print('___________________________________________________________________')
+    print('_____________________________Cutflows______________________________')
+    for sel in selections:
+        print('___________________________________________________________________')
+        print('------------------------','Selection:', sel ,'--------------------------')
+
+        cutflow_by_key = []
+        # To create the yield summary
+        for key in req_hists.keys():
+            datasets = req_hists[key]['datasets']
+            cutflow_object_list = []
+            xsec_scale = []
+            print('-------------------------------------------------------------------')
+            print(f"Key: {key}            Sample:{datasets} ")
+            print('-------------------------------------------------------------------')
+            for i in datasets:
+                object = input_dict[i]['cutflow'][sel]
+                cutflow_object_list.append(object)
+                object.print()
+                Raw_Events = object.result().nevcutflow[0]
+                xsec_scale.append(get_xsec_scale(i, Raw_Events, intLumi))
+            unscaled_cutflow = get_cutflow_props(cutflow_object_list)
+            cutflow = get_cutflow_props(cutflow_object_list, scale=xsec_scale)
+            cutflow_by_key.append(cutflow)
+            print('xsec_scale = ',xsec_scale)
+
+        hists = [cutflow_object.cutflow for cutflow_object in cutflow_by_key]
+        ncuts = len(cutflow_by_key[0].labels)
+        xticks = np.arange(ncuts)
+        color_list = [req_hists[key]['color'] for key in req_hists.keys()]
+        plot_path_selection = path+sel+'/'
+        if not os.path.exists(plot_path_selection):
+            os.makedirs(plot_path_selection)
+
+        #To create the cutflow plots
+        print('-------------------------------------------------------------------')
+        for log_mode in log:
+            for stack_mode in stack:
+                name = 'Cutflow'
+                fig, ax = plt.subplots(figsize=(8,8))
+                makeplot(
+                    fig=fig,
+                    ax=ax,
+                    hist=hists,
+                    name=name,
+                    title=sel+' Cutflow',
+                    label=req_hists.keys(),
+                    xlabel='Cut Order',
+                    ylabel='Events',
+                    bins=len(xticks)+1,
+                    xmin=xticks[0],
+                    xmax=xticks[-1],
+                    log=log_mode,
+                    stack=stack_mode,
+                    color=color_list,
+                    histtype='fill',
+                    cutflow_mode=True
+                )
+                if log_mode :
+                    log_mode_text = 'log'
+                else :
+                    log_mode_text = 'linear'
+
+                if stack_mode :
+                    stack_mode_text = 'stacked'
+                else :
+                    stack_mode_text = 'unstacked'
+                for format in formats :
+                    filename = name+'_'+log_mode_text+'_'+stack_mode_text+'.'+format
+                    full_name = plot_path_selection+filename
+                    fig.savefig(full_name,dpi=240);
+                    print(filename, " saved at ", plot_path_selection)
+                plt.close()
+
+        yield_plot(
+            name='Yield',
+            title=f'{sel} Yield',
+            keys=req_hists.keys(),
+            cutflow_obs=cutflow_by_key,
+            # rawstats= raw_nev,
+            formats=formats,
+            path=plot_path_selection
+        )
+        print('-------------------------------------------------------------------')
+        print('_____________________________________________________________________\n')
+
+def plots(input_dict, req_hists, req_plots, selections, stack, log, formats, path):
+    '''
+    Batch plot processor
+    '''
+    for sel in selections:
+        print('_________________________________________________________________')
+        print('---------------------','Selection:', sel ,'---------------------')
+
+        #Get hist array for different backgrounds
+        label_list, label_list_signal = [], []
+        dataset_list, dataset_list_signal = [], []
+        color_list,color_list_signal = [], []
+        hist_list, hist_list_signal = [], []
+        for key in req_hists :
+            if req_hists[key]['type'] == 'Signal':
+                label_signal = key
+                datasets_signal = req_hists[key]['datasets']
+                color_signal = req_hists[key]['color']
+                hists_signal = []
+                for i in datasets_signal:
+                    object_signal = input_dict[i]['cutflow'][sel]
+                    Raw_Events_signal = object_signal.result().nevcutflow[0]
+                    xsec_scale_signal = get_xsec_scale(i, Raw_Events_signal, intLumi)
+                    hist_signal = input_dict[i]['histograms'][sel]
+                    scaled_hist_signal = { name: xsec_scale_signal*hist for name, hist in hist_signal.items()}
+                    hists_signal.append(scaled_hist_signal)
+                label_list_signal.append(label_signal)
+                dataset_list_signal.append(datasets_signal)
+                color_list_signal.append(color_signal)
+                hist_list_signal.append(accumulate(hists_signal))
+            elif req_hists[key]['type'] == 'Background':
+                label = key
+                datasets = req_hists[key]['datasets']
+                color = req_hists[key]['color']
+                hists = []
+                for i in datasets:
+                    object = input_dict[i]['cutflow'][sel]
+                    Raw_Events = object.result().nevcutflow[0]
+                    xsec_scale = get_xsec_scale(i, Raw_Events, intLumi)
+                    hist = input_dict[i]['histograms'][sel]
+                    scaled_hist = { name: xsec_scale*hist for name, hist in hist.items()}
+                    hists.append(scaled_hist)
+                label_list.append(label)
+                dataset_list.append(datasets)
+                color_list.append(color)
+                hist_list.append(accumulate(hists))
+            else:
+                raise TypeError('Unrecognised type in req_hists')
+
+        plot_path_selection = path+sel+'/'
+        if not os.path.exists(plot_path_selection):
+            os.makedirs(plot_path_selection)
+
+        for hist_name in req_plots:
+            hist = [hists[hist_name] for hists in hist_list]
+            hist_signal = [hists[hist_name] for hists in hist_list_signal]
+
+            print(hist_name, ' : ', plot_props[hist_name].title)
+            print('---------------------------------------------------------------')
+            for log_mode in log :
+                for stack_mode in stack:
+                    fig, ax = plt.subplots(figsize=(8,8))
+                    #Backgrounds
+                    makeplot(
+                        fig=fig,
+                        ax=ax,
+                        hist=hist,
+                        name=plot_props[hist_name].name,
+                        title=plot_props[hist_name].title,
+                        label=label_list,
+                        xlabel=plot_props[hist_name].xlabel,
+                        ylabel=plot_props[hist_name].ylabel,
+                        bins=plot_props[hist_name].bins,
+                        xmin=plot_props[hist_name].xmin,
+                        xmax=plot_props[hist_name].xmax,
+                        log=log_mode,
+                        stack=True, #Always stack backgrounds
+                        color=color_list,
+                        histtype='fill',
+                    )
+                    #Signal
+                    if stack_mode :
+                        sigl_hist = sum(hist_signal)+sum(hist) #Manual stacking because independent stacking is not supported in mplhep
+                    else :
+                        sigl_hist = hist_signal
+
+                    hep.histplot(
+                        sigl_hist,
+                        color=color_list_signal,
+                        label=label_list_signal,
+                        histtype='step',
+                        stack=False, #overridden by stack_mode bool
+                        linewidth=1,
+                        ax=ax
+                    )
+                    fig.legend(prop={"size":10},loc= (0.74,0.74) )
+                    if log_mode :
+                        log_mode_text = 'log'
+                    else :
+                        log_mode_text = 'linear'
+
+                    if stack_mode :
+                        stack_mode_text = 'stacked'
+                    else :
+                        stack_mode_text = 'unstacked'
+                    for format in formats :
+                        filename = plot_props[hist_name].name+'_'+log_mode_text+'_'+stack_mode_text+'.'+format
+                        full_name = plot_path_selection+filename
+                        fig.savefig(full_name,dpi=240);
+                        print(filename, " saved at ", plot_path_selection)
+                    plt.close()
+            print('-------------------------------------------------------------------')
+        print('_____________________________________________________________________\n')
+
+def plots2(input_dict, req_hists, req_plots, selections, stack, log, formats, path, plotprops):
+    '''
+    Batch plot processor
     '''
     for sel in selections:
         print('_________________________________________________________________')
@@ -476,5 +680,5 @@ else :
 print("Plotting...")
 if not os.path.exists(plot_path):
     os.makedirs(plot_path)
-
-plots(input, req_hists, req_plots, selections, stack, log, formats, plot_path,plot_props)
+#cutflow(input, req_hists, selections, stack, log, formats, plot_path)
+plots2(input, req_hists, req_plots, selections, stack, log, formats, plot_path,plot_props)

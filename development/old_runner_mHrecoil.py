@@ -16,9 +16,9 @@ if __name__=="__main__":
     pgb = ProgressBar()
     pgb.register()
 
-    ##############################
-    # Define the terminal inputs #
-    ##############################
+        ##############################
+        # Define the terminal inputs #
+        ##############################
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -110,9 +110,6 @@ if __name__=="__main__":
         return yaml_dict
 
     def get_fileset(yaml_dict, fraction, skipbadfiles=True, redirector=''):
-        '''
-        Returns fileset a fraction of fileset in the dask compatible format
-        '''
         output_fileset_dictionary = {}
         print('_________Loading fileset__________')
         for key in yaml_dict.keys():
@@ -280,13 +277,13 @@ queue 1'''
 
 
 
-    ###################
-    # Run the process #
-    ###################
-
     raw_yaml = load_yaml_fileinfo(process)
     myfileset = get_fileset(raw_yaml, fraction, redirector='root://eospublic.cern.ch/')
     fileset = break_into_many(input_fileset=myfileset,n=inputs.chunks)
+
+    ###################
+    # Run the process #
+    ###################
 
     print('Preparing fileset before run...')
 
