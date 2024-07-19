@@ -4,6 +4,7 @@ import awkward as ak
 import pandas as pd
 import dask_awkward as dak
 import hist.dask as hda
+from collections import namedtuple
 import hist
 import vector
 vector.register_awkward()
