@@ -32,7 +32,7 @@ def get_1Dhist(name, var, flatten=True):
     Returns a histogram
     '''
     props = plot_props[name]
-    if flatten : var = ak.flatten(var)
+    if flatten : var = dak.ravel(var)
     return hda.Hist.new.Reg(props.bins, props.xmin, props.xmax).Double().fill(var)
     
 def get(events,collection,attribute,*cut):
