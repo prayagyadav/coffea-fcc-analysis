@@ -4,6 +4,7 @@ import awkward as ak
 import pandas as pd
 import dask_awkward as dak
 import hist.dask as hda
+from collections import namedtuple
 import hist
 import vector
 vector.register_awkward()
@@ -32,7 +33,7 @@ def get_1Dhist(name, var, flatten=True):
     Returns a histogram
     '''
     props = plot_props[name]
-    if flatten : var = ak.flatten(var)
+    if flatten : var = dak.flatten(var)
     return hda.Hist.new.Reg(props.bins, props.xmin, props.xmax).Double().fill(var)
     
 def get(events,collection,attribute,*cut):
