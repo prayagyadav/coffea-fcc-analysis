@@ -64,13 +64,19 @@ def get_reco(Reconstr_branch, needed_particle, events):
     part = namedtuple('particle', list(Reconstr_branch._fields))
     return part(*[getattr(Reconstr_branch,attr)[get(events,needed_particle,'index')] for attr in Reconstr_branch._fields])
 
-def compute_cutflow(cutflow_object)
+def compute_cutflow(cutflow_object):
     res = cutflow_object.result()
-    return Cutflow(res.names,
-                   res.nevonecut.compute(),
-                   res.nevcutflow.compute(),
-                   res.masksonecut.compute(),
-                   res.maskscutflow.compute(),
+    names = res.labels
+    names.remove('initial') #initial is added when Cutflow is called, so remove initial to avoid duplicates
+    nevonecut = [i.compute() for i in res.nevonecut]
+    nevcutflow = [i.compute() for i in res.nevcutflow]
+    masksonecut = [i.compute() for i in res.masksonecut]
+    maskscutflow = [i.compute() for i in res.maskscutflow]
+    return Cutflow(names,
+                   nevonecut,
+                   nevcutflow,
+                   masksonecut,
+                   maskscutflow,
                    delayed_mode=False)
 
 #################################
