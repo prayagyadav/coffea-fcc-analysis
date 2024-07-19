@@ -1,5 +1,5 @@
 from coffea import processor
-from coffea.analysis_tools import PackedSelection
+from coffea.analysis_tools import PackedSelection, Cutflow
 import awkward as ak
 import pandas as pd
 import dask_awkward as dak
@@ -63,6 +63,14 @@ def get_reco(Reconstr_branch, needed_particle, events):
     part = namedtuple('particle', list(Reconstr_branch._fields))
     return part(*[getattr(Reconstr_branch,attr)[get(events,needed_particle,'index')] for attr in Reconstr_branch._fields])
 
+def compute_cutflow(cutflow_object)
+    res = cutflow_object.result()
+    return Cutflow(res.names,
+                   res.nevonecut.compute(),
+                   res.nevcutflow.compute(),
+                   res.masksonecut.compute(),
+                   res.maskscutflow.compute(),
+                   delayed_mode=False)
 
 #################################
 #Begin the processor definition #
@@ -130,8 +138,8 @@ class mHrecoil(processor.ProcessorABC):
         #Prepare cutflows
         sel0_list = ['No cut','At least one Reco Particle', 'Muon $p_T$ > 10 [GeV]', '$N_Z$', 'Opp charge muons' ]
         sel1_list = ['No cut','At least one Reco Particle', 'Muon $p_T$ > 10 [GeV]', '$N_Z$', 'Opp charge muons', '80 < $M_Z$ < 100']
-        sel0 = cut.cutflow(*sel0_list)
-        sel1 = cut.cutflow(*sel1_list)
+        sel0 = compute_cutflow(cut.cutflow(*sel0_list))
+        sel1 = compute_cutflow(cut.cutflow(*sel1_list))
         
         #Prepare output
         #Choose the required histograms and their assigned variables to fill
@@ -143,7 +151,7 @@ class mHrecoil(processor.ProcessorABC):
                 'sel0':{name:get_1Dhist(name,var) for name,var in zip(names,vars_sel0)},
                 'sel1':{name:get_1Dhist(name,var) for name,var in zip(names,vars_sel1)}
             },
-            'cutflow': { #cutflow objects
+            'cutflow': { #Computed cutflow objects
                 'sel0': sel0,
                 'sel1': sel1
             }
