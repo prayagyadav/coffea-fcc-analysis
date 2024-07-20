@@ -9,27 +9,6 @@ from processor_mHrecoil import plot_props
 # Definition of useful functions #
 ##################################
 
-def summarize(d,ntabs=1):
-    '''
-    Visualises a dictionary lazily:
-        Gets integral of any hist.Hist object
-        Gets initial value of any coffea.analysis_tools.Cutflow objects
-        Gets type of of any other object
-    Returns a print-ready string
-    '''
-    tab = '\t'*ntabs
-    print_string ='{\n'
-    for key,value in d.items():
-        print_string += f"{tab}{key} : "
-        if isinstance(value,dict):
-            print_string += summarize(value, ntabs=ntabs+1)
-        elif isinstance(value, hist.hist.Hist):
-            print_string += f"{type(value)}\tIntegral:{value.sum()}\n"
-        else :
-            print_string += f"{type(value)}\n"
-    print_string += tab+'}\n'
-    return print_string
-
 def get_subdict(dicts, key):
     '''
     Get list of subdictionaries(if available) from a list of dictionaries
@@ -76,6 +55,9 @@ def accumulate(dicts):
     return outdict
 
 def get_xsec_scale(dataset, raw_events, Luminosity):
+    '''
+    Get final scale factor from cross section
+    '''
     xsec = cross_sections[dataset] #in per picobarn
     if raw_events > 0:
         sf = (xsec*Luminosity)/raw_events
@@ -128,6 +110,33 @@ def yield_plot(name, title, keys, scaled, unscaled, formats, path):
         print(filename, " saved at ", path)
     plt.close()
 
+def cuts_table(name, title, labels, formats, path):
+    '''
+    Create cut table and save as png
+    '''
+
+    fig, ax = plt.subplots(figsize=(8,8))
+    ax.text(0.25, 1.02, 'FCC Analyses: FCC Simulation Delphes', fontsize=10, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
+    ax.text(0.92, 1.02, '$\\sqrt{s} = '+str(energy)+' GeV$', fontsize=10, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
+
+    level, linespacing = 0.90, 0.05
+    ax.text(0.02, level, 'Cut Order', weight='bold', fontsize=12, horizontalalignment='left', verticalalignment='center', transform=ax.transAxes)
+    ax.text(0.30, level, 'Label', weight='bold', fontsize=12, horizontalalignment='left', verticalalignment='center', transform=ax.transAxes)
+
+    for i in range(len(labels)):
+        level -= linespacing
+        ax.text(0.02, level, str(i), fontsize=10,horizontalalignment='left', verticalalignment='center', transform=ax.transAxes)
+        ax.text(0.30, level, labels[i],fontsize=12, horizontalalignment='left', verticalalignment='center', transform=ax.transAxes)
+    level -= 2*linespacing
+
+    ax.set_title(title,pad=25,  fontsize= "15", color="#192655")
+    for format in formats :
+        filename = name+'.'+format
+        full_name = path+filename
+        fig.savefig(full_name,dpi=240);
+        print(filename, " saved at ", path)
+    plt.close()
+
 def plots(input_dict, req_hists, req_plots, selections, stack, log, formats, path, plotprops):
     '''
     Batch plot processor: Creates Yield, Cutflow and Kinematic plots
@@ -158,6 +167,7 @@ def plots(input_dict, req_hists, req_plots, selections, stack, log, formats, pat
                 unscaled_hists_signal = []
                 for i in datasets_signal:
                     cutflow_hist = input_dict[i]['cutflow'][sel]['Cutflow']
+                    cut_labels = input_dict[i]['cutflow'][sel]['Labels']
                     cutflow_values = cutflow_hist.values()
                     Raw_Events_signal = cutflow_values[0]
                     print(f'-->RawEvents for {i}: {Raw_Events_signal}')
@@ -175,7 +185,6 @@ def plots(input_dict, req_hists, req_plots, selections, stack, log, formats, pat
                 color_list_signal.append(color_signal)
                 hist_list_signal.append(accumulate(hists_signal))
                 unscaled_hist_list_signal.append(accumulate(unscaled_hists_signal))
-                print(hist_list_signal)
 
             elif req_hists[key]['type'] == 'Background':
                 print('-->Type: Background')
@@ -203,9 +212,23 @@ def plots(input_dict, req_hists, req_plots, selections, stack, log, formats, pat
                 color_list.append(color)
                 hist_list.append(accumulate(hists))
                 unscaled_hist_list.append(accumulate(unscaled_hists))
-                print(hist_list)
             else:
                 raise TypeError('Unrecognised type in req_hists')
+
+
+        # Make Cut table
+        print('---------------------------------------------------------------')
+        print('Cuts Table : Info about the cuts')
+        print('---------------------------------------------------------------')
+        cuts_table(
+            name='Cuts_table',
+            title=f'{sel} cuts',
+            labels=cut_labels,
+            formats=formats,
+            path=plot_path_selection
+        )
+        print('---------------------------------------------------------------')
+
 
         #Make Yield Plots
         print('---------------------------------------------------------------')

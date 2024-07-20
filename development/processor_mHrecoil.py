@@ -105,7 +105,7 @@ class mHrecoil(processor.ProcessorABC):
 
         # Selection 0 : Only one Z candidate in an event
         di_muon = dak.mask(di_muon, dak.num(di_muon) == 1)
-        cut.add('$N_Z$',dak.num(Muon) == 2 ) #Having one Z candidate is same as having exactly two muons in an even
+        cut.add('$N_Z = 1$',dak.num(Muon) == 2 ) #Having one Z candidate is same as having exactly two muons in an even
 
         # Choose dimuon which is made up of two oppositely charged muons
         q_sum = mu1.q + mu2.q

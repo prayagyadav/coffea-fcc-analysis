@@ -210,7 +210,7 @@ if __name__=="__main__":
 
         return out
 
-    def create_job_python_file(dataset_runnable, maxchunks,filename, output_file):#, path):
+    def create_job_python_file(dataset_runnable, maxchunks,filename, output_file):
         s = f'''
 from coffea import util
 from coffea.nanoevents import BaseSchema
@@ -232,7 +232,7 @@ computed = dask.compute(to_compute)
 
 print("Saving the output to : " , "{output_file}")
 util.save(output= Output, filename="{output_file}")
-print("File {output_file} saved")# at {path}")
+print("File {output_file} saved")
 print("Execution completed.")
 
         '''
