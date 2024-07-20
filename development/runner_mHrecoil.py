@@ -10,7 +10,6 @@ if __name__=="__main__":
     from processor_mHrecoil import mHrecoil
     from coffea.dataset_tools import apply_to_fileset,max_chunks,preprocess
     from coffea.analysis_tools import Cutflow
-    import pandas as pd
     import dask
     import copy
     import time
@@ -218,11 +217,15 @@ if __name__=="__main__":
         d = copy.deepcopy(input_d)
         for dataset in input_d.keys():
             for sel in input_d[dataset]['cutflow'].keys():
-                df = pd.DataFrame(input_d[dataset]['cutflow'][sel])
-                labels = list(df.index)
-                labels.remove('initial')
-                d[dataset]['cutflow'][sel] = Cutflow(labels,list(df['nevonecut']),list(df['nevcutflow']),list(df['masksonecut']),list(df['maskscutflow']),delayed_mode=False)
-        return d
+                c = input_d[dataset]['cutflow'][sel]
+                d[dataset]['cutflow'][sel] = Cutflow(
+                    list(c['masksonecut'].keys()),
+                    list(c['nevonecut'].values()),
+                    list(c['nevcutflow'].values()),
+                    list(c['masksonecut'].values()),
+                    list(c['maskscutflow'].values()),
+                    delayed_mode=False)
+        return d 
 
     def create_job_python_file(dataset_runnable, maxchunks,filename, output_file):#, path):
         s = f'''
@@ -232,19 +235,22 @@ import os
 from processor_mHrecoil import mHrecoil
 from coffea.dataset_tools import apply_to_fileset,max_chunks
 from coffea.analysis_tools import Cutflow
-import pandas as pd
 import copy
 import dask
 
-def transform(input_d):
+def transform2(input_d):
     d = copy.deepcopy(input_d)
     for dataset in input_d.keys():
         for sel in input_d[dataset]['cutflow'].keys():
-            df = pd.DataFrame(input_d[dataset]['cutflow'][sel])
-            labels = list(df.index)
-            labels.remove('initial')
-            d[dataset]['cutflow'][sel] = Cutflow(labels,list(df['nevonecut']),list(df['nevcutflow']),list(df['masksonecut']),list(df['maskscutflow']),delayed_mode=False)
-    return d
+            c = input_d[dataset]['cutflow'][sel]
+            d[dataset]['cutflow'][sel] = Cutflow(
+                list(c['masksonecut'].keys()),
+                list(c['nevonecut'].values()),
+                list(c['nevcutflow'].values()),
+                list(c['masksonecut'].values()),
+                list(c['maskscutflow'].values()),
+                delayed_mode=False)
+    return d 
 
 dataset_runnable = {dataset_runnable}
 maxchunks = {maxchunks}

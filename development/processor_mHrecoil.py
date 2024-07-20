@@ -72,10 +72,11 @@ def cutflow_transform(o):
     labels = res.labels
     nevonecut = {l:n for l,n in zip(labels,res.nevonecut)}
     nevcutflow = {l:n for l,n in zip(labels,res.nevcutflow)}
+    labels.remove('initial')
     masksonecut = {l:n for l,n in zip(labels,res.masksonecut)}
     maskscutflow = {l:n for l,n in zip(labels,res.maskscutflow)}
     return {'nevonecut':nevonecut,'nevcutflow':nevcutflow,'masksonecut':masksonecut,'maskscutflow':maskscutflow}
-
+    
 #################################
 #Begin the processor definition #
 #################################
