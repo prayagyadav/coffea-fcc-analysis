@@ -83,7 +83,7 @@ def get_xsec_scale(dataset, raw_events, Luminosity):
         raise ValueError('Raw events less than of equal to zero!')
     return round(float(sf),3)
 
-def yield_plot(name, title, keys, cutflow_obs, unscaled_cutflow_obs, formats, path):
+def yield_plot(name, title, keys, scaled, unscaled, formats, path):
     '''
     Create yield plots
     '''
@@ -97,7 +97,7 @@ def yield_plot(name, title, keys, cutflow_obs, unscaled_cutflow_obs, formats, pa
     ax.text(0.10, 0.74, '$L = '+str(intLumi/1e6)+' ab^{-1}$', fontsize=14, horizontalalignment='left', verticalalignment='center', transform=ax.transAxes)
 
     level, linespacing = 0.60, 0.05
-    for scale,obs in zip(['UNSCALED','SCALED'],[unscaled_cutflow_obs,cutflow_obs]):
+    for scale,obs in zip(['UNSCALED','SCALED'],[unscaled,scaled]):
         ax.text(0.02, level, scale, weight='bold', fontsize=13, horizontalalignment='left', verticalalignment='center', transform=ax.transAxes)
         level -= linespacing
         ax.text(0.02, level, 'Sample', weight='bold', fontsize=12, horizontalalignment='left', verticalalignment='center', transform=ax.transAxes)
@@ -109,9 +109,9 @@ def yield_plot(name, title, keys, cutflow_obs, unscaled_cutflow_obs, formats, pa
             datasets = req_hists[list(keys)[i]]['datasets']
             Type = req_hists[list(keys)[i]]['type']
             color = req_hists[list(keys)[i]]['color']
-            yield_text = str(round(obs[i].nevcutflow[-1],2))
-            raw_text = str(round(obs[i].nevcutflow[0],2))
-            percentage = str(round(obs[i].nevcutflow[-1]*100/obs[i].nevcutflow[0],2))
+            yield_text = str(round(obs[i]['Cutflow'].values()[-1],2))
+            raw_text = str(round(obs[i]['Cutflow'].values()[0],2))
+            percentage = str(round(obs[i]['Cutflow'].values()[-1]*100/obs[i]['Cutflow'].values()[0],2))
             level -= linespacing
             ax.text(0.02, level, datasets, fontsize=10, color=color,horizontalalignment='left', verticalalignment='center', transform=ax.transAxes)
             ax.text(0.30, level, Type, color=color,fontsize=12, horizontalalignment='left', verticalalignment='center', transform=ax.transAxes)
@@ -144,6 +144,7 @@ def plots(input_dict, req_hists, req_plots, selections, stack, log, formats, pat
         dataset_list, dataset_list_signal = [], []
         color_list, color_list_signal = [], []
         hist_list, hist_list_signal = [], []
+        unscaled_hist_list, unscaled_hist_list_signal = [], []
         for key in req_hists :
             print('-------------------------------------------------------------------')
             print(f"Key: {key}            Sample:{req_hists[key]['datasets']} ")
@@ -154,6 +155,7 @@ def plots(input_dict, req_hists, req_plots, selections, stack, log, formats, pat
                 datasets_signal = req_hists[key]['datasets']
                 color_signal = req_hists[key]['color']
                 hists_signal = []
+                unscaled_hists_signal = []
                 for i in datasets_signal:
                     cutflow_hist = input_dict[i]['cutflow'][sel]['Cutflow']
                     cutflow_values = cutflow_hist.values()
@@ -163,14 +165,16 @@ def plots(input_dict, req_hists, req_plots, selections, stack, log, formats, pat
                     print(f'-->xsec_scale for {i} = {xsec_scale_factor}')
                     Hist_signal = input_dict[i]['histograms'][sel]
                     scaled_hist_signal = { name: xsec_scale_factor*hist for name, hist in Hist_signal.items()}
-                    print(scaled_hist_signal)
                     scaled_hist_signal['Cutflow'] = xsec_scale_factor*cutflow_hist
                     hists_signal.append(scaled_hist_signal)
+                    unscaled_hist = copy.deepcopy(Hist_signal)
+                    unscaled_hist['Cutflow'] = cutflow_hist
+                    unscaled_hists_signal.append(unscaled_hist)
                 label_list_signal.append(label_signal)
                 dataset_list_signal.append(datasets_signal)
                 color_list_signal.append(color_signal)
-                # print(hists_signal)
                 hist_list_signal.append(accumulate(hists_signal))
+                unscaled_hist_list_signal.append(accumulate(unscaled_hists_signal))
                 print(hist_list_signal)
 
             elif req_hists[key]['type'] == 'Background':
@@ -179,6 +183,7 @@ def plots(input_dict, req_hists, req_plots, selections, stack, log, formats, pat
                 datasets = req_hists[key]['datasets']
                 color = req_hists[key]['color']
                 hists = []
+                unscaled_hists = []
                 for i in datasets:
                     cutflow_hist = input_dict[i]['cutflow'][sel]['Cutflow']
                     cutflow_values = cutflow_hist.values()
@@ -190,28 +195,32 @@ def plots(input_dict, req_hists, req_plots, selections, stack, log, formats, pat
                     scaled_hist = { name: xsec_scale_factor*hist for name, hist in Hist.items()}
                     scaled_hist['Cutflow'] = xsec_scale_factor*cutflow_hist
                     hists.append(scaled_hist)
+                    unscaled_hist = copy.deepcopy(Hist)
+                    unscaled_hist['Cutflow'] = cutflow_hist
+                    unscaled_hists.append(unscaled_hist)
                 label_list.append(label)
                 dataset_list.append(datasets)
                 color_list.append(color)
                 hist_list.append(accumulate(hists))
+                unscaled_hist_list.append(accumulate(unscaled_hists))
                 print(hist_list)
             else:
                 raise TypeError('Unrecognised type in req_hists')
 
-        # #Make Yield Plots
-        # print('---------------------------------------------------------------')
-        # print('Yield : Unscaled  and Scaled')
-        # print('---------------------------------------------------------------')
-        # yield_plot(
-        #     name='Yield',
-        #     title=f'{sel} Yield',
-        #     keys=req_hists.keys(),
-        #     cutflow_obs=hist_list_signal,
-        #     unscaled_cutflow_obs=unscaled_cutflow_by_key_signal+unscaled_cutflow_by_key,
-        #     formats=formats,
-        #     path=plot_path_selection
-        # )
-        # print('---------------------------------------------------------------')
+        #Make Yield Plots
+        print('---------------------------------------------------------------')
+        print('Yield : Unscaled  and Scaled')
+        print('---------------------------------------------------------------')
+        yield_plot(
+            name='Yield',
+            title=f'{sel} Yield',
+            keys=req_hists.keys(),
+            scaled=hist_list_signal+hist_list,
+            unscaled=unscaled_hist_list_signal+unscaled_hist_list,
+            formats=formats,
+            path=plot_path_selection
+        )
+        print('---------------------------------------------------------------')
 
         # Add cutflow to plot_props
         xticks = np.arange(len(cutflow_values))
