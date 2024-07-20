@@ -9,6 +9,7 @@ if __name__=="__main__":
     import subprocess
     from processor_mHrecoil import mHrecoil
     from coffea.dataset_tools import apply_to_fileset,max_chunks,preprocess
+    from coffea.analysis_tools import Cutflow
     import dask
     import copy
     import time
@@ -208,6 +209,19 @@ if __name__=="__main__":
                     del out[f][dataset]
 
         return out
+        
+    def transform(input_d):
+        '''
+        Take the output of processor and change the cutflow dictionary into a cutflow object
+        '''
+        d = copy.deepcopy(input_d)
+        for dataset in input_d.keys():
+            for sel in input_d[dataset]['cutflow'].keys():
+                df = pd.DataFrame(input_d[dataset]['cutflow'][sel])
+                labels = list(df.index)
+                labels.remove('initial')
+                d[dataset]['cutflow'] = Cutflow(labels,list(df['nevonecut']),list(df['nevcutflow']),list(df['masksonecut']),list(df['maskscutflow']),delayed_mode=False)
+        return d
 
     def create_job_python_file(dataset_runnable, maxchunks,filename, output_file):#, path):
         s = f'''
@@ -216,7 +230,19 @@ from coffea.nanoevents import BaseSchema
 import os
 from processor_mHrecoil import mHrecoil
 from coffea.dataset_tools import apply_to_fileset,max_chunks
+from coffea.analysis_tools import Cutflow
+import copy
 import dask
+
+def transform(input_d):
+    d = copy.deepcopy(input_d)
+    for dataset in input_d.keys():
+        for sel in input_d[dataset]['cutflow'].keys():
+            df = pd.DataFrame(input_d[dataset]['cutflow'][sel])
+            labels = list(df.index)
+            labels.remove('initial')
+            d[dataset]['cutflow'] = Cutflow(labels,list(df['nevonecut']),list(df['nevcutflow']),list(df['masksonecut']),list(df['maskscutflow']),delayed_mode=False)
+    return d
 
 dataset_runnable = {dataset_runnable}
 maxchunks = {maxchunks}
@@ -230,10 +256,7 @@ computed = dask.compute(to_compute)
 (Output,) = computed
 
 print("Saving the output to : " , "{output_file}")
-#if not os.path.exists("{path}"):
-#    os.makedirs("{path}")
-#util.save(output= Output, filename="{path}"+"/"+"{output_file}")
-util.save(output= Output, filename="{output_file}")
+util.save(output= transform(Output), filename="{output_file}")
 print("File {output_file} saved")# at {path}")
 print("Execution completed.")
 
@@ -277,9 +300,8 @@ queue 1'''
             s += f'condor_submit {submitfile_base_name}_{i}.sh\nsleep {wait_time}\n'
         with open('condor.sh','w') as f:
             f.write(s)
-
-
-
+               
+                
     ###################
     # Run the process #
     ###################
@@ -323,7 +345,7 @@ queue 1'''
             else:
                 output_filename = output_file
             print("Saving the output to : " , output_filename)
-            util.save(output= Out, filename=path+output_filename)
+            util.save(output= transform(Out), filename=path+output_filename)
             print(f"File {output_filename} saved at {path}")
         print("Execution completed.")
 
