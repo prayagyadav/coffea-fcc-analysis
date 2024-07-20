@@ -119,6 +119,8 @@ class mHrecoil(processor.ProcessorABC):
         ecm = 240.0 #GeV # com energy
         Recoil = ak.zip({"px":0.0-Z_cand.px,"py":0.0-Z_cand.py,"pz":0.0-Z_cand.pz,"E":ecm-Z_cand.E},with_name="Momentum4D")
 
+        sel0_ocl = cut.cutflow(*cut.names).yieldhist()
+
         # Selection 1 : Selection 0 + 80 < M_Z < 100
         zmassmask = (Z_cand.mass > 80) & (Z_cand.mass < 100)
         Z_cand_sel1 = Z_cand[zmassmask]
@@ -127,11 +129,7 @@ class mHrecoil(processor.ProcessorABC):
         zmassmask = ak.flatten(zmassmask)
         cut.add('80 < $M_Z$ < 100',zmassmask)
 
-        #Prepare cutflows
-        sel0_list = ['No cut','At least one Reco Particle', 'Muon $p_T$ > 10 [GeV]', '$N_Z$', 'Opp charge muons' ]
-        sel1_list = ['No cut','At least one Reco Particle', 'Muon $p_T$ > 10 [GeV]', '$N_Z$', 'Opp charge muons', '80 < $M_Z$ < 100']
-        sel0_ocl = cut.cutflow(*sel0_list).yieldhist()
-        sel1_ocl = cut.cutflow(*sel1_list).yieldhist()
+        sel1_ocl = cut.cutflow(*cut.names).yieldhist()
 
         #Prepare output
         #Choose the required histograms and their assigned variables to fill
