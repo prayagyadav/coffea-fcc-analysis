@@ -10,6 +10,7 @@ if __name__=="__main__":
     from processor_mHrecoil import mHrecoil
     from coffea.dataset_tools import apply_to_fileset,max_chunks,preprocess
     from coffea.analysis_tools import Cutflow
+    import pandas as pd
     import dask
     import copy
     import time
@@ -220,7 +221,7 @@ if __name__=="__main__":
                 df = pd.DataFrame(input_d[dataset]['cutflow'][sel])
                 labels = list(df.index)
                 labels.remove('initial')
-                d[dataset]['cutflow'] = Cutflow(labels,list(df['nevonecut']),list(df['nevcutflow']),list(df['masksonecut']),list(df['maskscutflow']),delayed_mode=False)
+                d[dataset]['cutflow'][sel] = Cutflow(labels,list(df['nevonecut']),list(df['nevcutflow']),list(df['masksonecut']),list(df['maskscutflow']),delayed_mode=False)
         return d
 
     def create_job_python_file(dataset_runnable, maxchunks,filename, output_file):#, path):
@@ -231,6 +232,7 @@ import os
 from processor_mHrecoil import mHrecoil
 from coffea.dataset_tools import apply_to_fileset,max_chunks
 from coffea.analysis_tools import Cutflow
+import pandas as pd
 import copy
 import dask
 
@@ -241,7 +243,7 @@ def transform(input_d):
             df = pd.DataFrame(input_d[dataset]['cutflow'][sel])
             labels = list(df.index)
             labels.remove('initial')
-            d[dataset]['cutflow'] = Cutflow(labels,list(df['nevonecut']),list(df['nevcutflow']),list(df['masksonecut']),list(df['maskscutflow']),delayed_mode=False)
+            d[dataset]['cutflow'][sel] = Cutflow(labels,list(df['nevonecut']),list(df['nevcutflow']),list(df['masksonecut']),list(df['maskscutflow']),delayed_mode=False)
     return d
 
 dataset_runnable = {dataset_runnable}
