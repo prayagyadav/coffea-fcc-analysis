@@ -217,8 +217,6 @@ from coffea.nanoevents import BaseSchema
 import os
 from processor_mHrecoil import mHrecoil
 from coffea.dataset_tools import apply_to_fileset,max_chunks
-from coffea.analysis_tools import Cutflow
-import copy
 import dask
 
 dataset_runnable = {dataset_runnable}
