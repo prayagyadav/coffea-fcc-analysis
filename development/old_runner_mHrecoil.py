@@ -9,6 +9,7 @@ if __name__=="__main__":
     import subprocess
     from processor_mHrecoil import mHrecoil
     from coffea.dataset_tools import apply_to_fileset,max_chunks,preprocess
+    from coffea.analysis_tools import Cutflow
     import dask
     import copy
     import time
@@ -16,9 +17,9 @@ if __name__=="__main__":
     pgb = ProgressBar()
     pgb.register()
 
-        ##############################
-        # Define the terminal inputs #
-        ##############################
+    ##############################
+    # Define the terminal inputs #
+    ##############################
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -71,8 +72,8 @@ if __name__=="__main__":
     }
     fraction = {
         'p8_ee_ZZ_ecm240':0.005,
-        'p8_ee_WW_ecm240':0.5*0.1,
-        'p8_ee_ZH_ecm240':0.2*0.1
+        'p8_ee_WW_ecm240':0.5,
+        'p8_ee_ZH_ecm240':0.2
     }
     output_file = inputs.outfile+".coffea"
     path = inputs.path
@@ -110,6 +111,9 @@ if __name__=="__main__":
         return yaml_dict
 
     def get_fileset(yaml_dict, fraction, skipbadfiles=True, redirector=''):
+        '''
+        Returns fileset a fraction of fileset in the dask compatible format
+        '''
         output_fileset_dictionary = {}
         print('_________Loading fileset__________')
         for key in yaml_dict.keys():
@@ -205,6 +209,23 @@ if __name__=="__main__":
                     del out[f][dataset]
 
         return out
+        
+    def transform(input_d):
+        '''
+        Take the output of processor and change the cutflow dictionary into a cutflow object
+        '''
+        d = copy.deepcopy(input_d)
+        for dataset in input_d.keys():
+            for sel in input_d[dataset]['cutflow'].keys():
+                c = input_d[dataset]['cutflow'][sel]
+                d[dataset]['cutflow'][sel] = Cutflow(
+                    list(c['masksonecut'].keys()),
+                    list(c['nevonecut'].values())[1:],
+                    list(c['nevcutflow'].values())[1:],
+                    list(c['masksonecut'].values()),
+                    list(c['maskscutflow'].values()),
+                    delayed_mode=False)
+        return d 
 
     def create_job_python_file(dataset_runnable, maxchunks,filename, output_file):#, path):
         s = f'''
@@ -213,7 +234,23 @@ from coffea.nanoevents import BaseSchema
 import os
 from processor_mHrecoil import mHrecoil
 from coffea.dataset_tools import apply_to_fileset,max_chunks
+from coffea.analysis_tools import Cutflow
+import copy
 import dask
+
+def transform(input_d):
+    d = copy.deepcopy(input_d)
+    for dataset in input_d.keys():
+        for sel in input_d[dataset]['cutflow'].keys():
+            c = input_d[dataset]['cutflow'][sel]
+            d[dataset]['cutflow'][sel] = Cutflow(
+                list(c['masksonecut'].keys()),
+                list(c['nevonecut'].values()),
+                list(c['nevcutflow'].values()),
+                list(c['masksonecut'].values()),
+                list(c['maskscutflow'].values()),
+                delayed_mode=False)
+    return d 
 
 dataset_runnable = {dataset_runnable}
 maxchunks = {maxchunks}
@@ -227,10 +264,7 @@ computed = dask.compute(to_compute)
 (Output,) = computed
 
 print("Saving the output to : " , "{output_file}")
-#if not os.path.exists("{path}"):
-#    os.makedirs("{path}")
-#util.save(output= Output, filename="{path}"+"/"+"{output_file}")
-util.save(output= Output, filename="{output_file}")
+util.save(output= transform(Output), filename="{output_file}")
 print("File {output_file} saved")# at {path}")
 print("Execution completed.")
 
@@ -274,16 +308,15 @@ queue 1'''
             s += f'condor_submit {submitfile_base_name}_{i}.sh\nsleep {wait_time}\n'
         with open('condor.sh','w') as f:
             f.write(s)
-
-
+               
+                
+    ###################
+    # Run the process #
+    ###################
 
     raw_yaml = load_yaml_fileinfo(process)
     myfileset = get_fileset(raw_yaml, fraction, redirector='root://eospublic.cern.ch/')
     fileset = break_into_many(input_fileset=myfileset,n=inputs.chunks)
-
-    ###################
-    # Run the process #
-    ###################
 
     print('Preparing fileset before run...')
 
@@ -320,7 +353,7 @@ queue 1'''
             else:
                 output_filename = output_file
             print("Saving the output to : " , output_filename)
-            util.save(output= Out, filename=path+output_filename)
+            util.save(output= transform(Out), filename=path+output_filename)
             print(f"File {output_filename} saved at {path}")
         print("Execution completed.")
 

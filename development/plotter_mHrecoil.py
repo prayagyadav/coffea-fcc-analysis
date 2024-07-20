@@ -54,7 +54,7 @@ def accumulate(dicts):
     Returns:
     dict: A dictionary with combined keys and values summed for common keys.
     """
-
+    exception_list = ['Labels'] # These keys will not be repeated but included once.
     outdict = {}
 
     for diction in dicts:
@@ -69,6 +69,8 @@ def accumulate(dicts):
                 outdict[key] = value
             else:
                 if key in outdict.keys():
+                    if key in exception_list:
+                        outdict[key] = value
                     outdict[key] += value  # Add values if the key is common
                 else:
                     outdict[key] = value  # Otherwise, add the new key-value pair
@@ -82,29 +84,6 @@ def get_xsec_scale(dataset, raw_events, Luminosity):
     else :
         raise ValueError('Raw events less than of equal to zero!')
     return sf
-
-def add_cutflow(c1,c2):
-    '''
-    Add cutflow objects assuming they operate on non-overlaping sample regions
-    '''
-    r1 = c1.result()
-    r2 = c2.result()
-
-
-    if r1.labels == r2.labels :
-        names = r1.labels
-        names.remove('initial') # initial is added when Cutflow class is called, so removing it to preserve names list length
-        names = names
-        nevonecut = [a+b for a,b in zip(r1.nevonecut,r2.nevonecut)]
-        nevcutflow = [a+b for a,b in zip(r1.nevcutflow,r2.nevcutflow)]
-        masksonecut = [np.concatenate((a,b)) for a,b in zip(r1.masksonecut,r2.masksonecut)]
-        maskscutflow = [np.concatenate((a,b)) for a,b in zip(r1.maskscutflow,r2.maskscutflow)]
-
-    else:
-        raise KeyError("The labels of the cutflow do not match!")
-    return Cutflow(names, nevonecut, nevcutflow, masksonecut, maskscutflow, delayed_mode=False)
-
-Cutflow.__add__ = add_cutflow #Monkey patch Cutflow class to enable the add method
 
 def get_cutflow_props(object_list, **kwargs):
     '''
@@ -198,8 +177,6 @@ def plots(input_dict, req_hists, req_plots, selections, stack, log, formats, pat
         dataset_list, dataset_list_signal = [], []
         color_list, color_list_signal = [], []
         hist_list, hist_list_signal = [], []
-        cutflow_by_key, cutflow_by_key_signal = [], []
-        unscaled_cutflow_by_key, unscaled_cutflow_by_key_signal = [], []
         for key in req_hists :
             print('-------------------------------------------------------------------')
             print(f"Key: {key}            Sample:{req_hists[key]['datasets']} ")
@@ -210,22 +187,17 @@ def plots(input_dict, req_hists, req_plots, selections, stack, log, formats, pat
                 datasets_signal = req_hists[key]['datasets']
                 color_signal = req_hists[key]['color']
                 hists_signal = []
-                cutflow_object_list_signal = []
                 xsec_scale_signal = []
                 for i in datasets_signal:
-                    object_signal = input_dict[i]['cutflow'][sel]
-                    cutflow_object_list_signal.append(object_signal)
-                    object_signal.print()
-                    onecut_hist, cutflow_hist,l = object_signal.yieldhist()
-                    Raw_Events_signal = object_signal.result().nevcutflow[0]
+                    cutflow_hist = input_dict[i]['cutflow'][sel]['Cutflow']
+                    cutflow_values = cutflow_hist.values()
+                    Raw_Events_signal = cutflow_values[0]
                     xsec_scale_factor = get_xsec_scale(i, Raw_Events_signal, intLumi)
                     xsec_scale_signal.append(xsec_scale_factor)
                     Hist_signal = input_dict[i]['histograms'][sel]
                     scaled_hist_signal = { name: xsec_scale_factor*hist for name, hist in Hist_signal.items()}
                     scaled_hist_signal['Cutflow'] = xsec_scale_factor*cutflow_hist
                     hists_signal.append(scaled_hist_signal)
-                unscaled_cutflow_by_key_signal.append(get_cutflow_props(cutflow_object_list_signal))
-                cutflow_by_key_signal.append(get_cutflow_props(cutflow_object_list_signal, scale=xsec_scale_signal))
                 print('-->xsec_scale = ',xsec_scale_signal)
                 label_list_signal.append(label_signal)
                 dataset_list_signal.append(datasets_signal)
@@ -238,22 +210,17 @@ def plots(input_dict, req_hists, req_plots, selections, stack, log, formats, pat
                 datasets = req_hists[key]['datasets']
                 color = req_hists[key]['color']
                 hists = []
-                cutflow_object_list = []
                 xsec_scale = []
                 for i in datasets:
-                    object = input_dict[i]['cutflow'][sel]
-                    cutflow_object_list.append(object)
-                    object.print()
-                    onecut_hist, cutflow_hist,l = object.yieldhist()
-                    Raw_Events = object.result().nevcutflow[0]
+                    cutflow_hist = input_dict[i]['cutflow'][sel]['Cutflow']
+                    cutflow_values = cutflow_hist.values()
+                    Raw_Events = cutflow_values[0]
                     xsec_scale_factor = get_xsec_scale(i, Raw_Events, intLumi)
                     xsec_scale.append(xsec_scale_factor)
                     Hist = input_dict[i]['histograms'][sel]
                     scaled_hist = { name: xsec_scale_factor*hist for name, hist in Hist.items()}
                     scaled_hist['Cutflow'] = xsec_scale_factor*cutflow_hist
                     hists.append(scaled_hist)
-                unscaled_cutflow_by_key.append(get_cutflow_props(cutflow_object_list))
-                cutflow_by_key.append(get_cutflow_props(cutflow_object_list, scale=xsec_scale))
                 print('-->xsec_scale = ',xsec_scale)
                 label_list.append(label)
                 dataset_list.append(datasets)
@@ -262,23 +229,23 @@ def plots(input_dict, req_hists, req_plots, selections, stack, log, formats, pat
             else:
                 raise TypeError('Unrecognised type in req_hists')
 
-        #Make Yield Plots
-        print('---------------------------------------------------------------')
-        print('Yield : Unscaled  and Scaled')
-        print('---------------------------------------------------------------')
-        yield_plot(
-            name='Yield',
-            title=f'{sel} Yield',
-            keys=req_hists.keys(),
-            cutflow_obs=cutflow_by_key_signal+cutflow_by_key,
-            unscaled_cutflow_obs=unscaled_cutflow_by_key_signal+unscaled_cutflow_by_key,
-            formats=formats,
-            path=plot_path_selection
-        )
-        print('---------------------------------------------------------------')
+        # #Make Yield Plots
+        # print('---------------------------------------------------------------')
+        # print('Yield : Unscaled  and Scaled')
+        # print('---------------------------------------------------------------')
+        # yield_plot(
+        #     name='Yield',
+        #     title=f'{sel} Yield',
+        #     keys=req_hists.keys(),
+        #     cutflow_obs=hist_list_signal,
+        #     unscaled_cutflow_obs=unscaled_cutflow_by_key_signal+unscaled_cutflow_by_key,
+        #     formats=formats,
+        #     path=plot_path_selection
+        # )
+        # print('---------------------------------------------------------------')
 
         # Add cutflow to plot_props
-        xticks = np.arange(len(l))
+        xticks = np.arange(len(cutflow_values))
         plotprops = plotprops.assign(Cutflow = ['Cutflow',sel+' Cutflow','Cut Order','Events',len(xticks)+1,xticks[0],xticks[-1]])
 
         # Start plotting
