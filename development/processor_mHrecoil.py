@@ -64,20 +64,17 @@ def get_reco(Reconstr_branch, needed_particle, events):
     part = namedtuple('particle', list(Reconstr_branch._fields))
     return part(*[getattr(Reconstr_branch,attr)[get(events,needed_particle,'index')] for attr in Reconstr_branch._fields])
 
-def compute_cutflow(cutflow_object):
-    res = cutflow_object.result()
-    names = res.labels
-    names.remove('initial') #initial is added when Cutflow is called, so remove initial to avoid duplicates
-    nevonecut = [i.compute() for i in res.nevonecut]
-    nevcutflow = [i.compute() for i in res.nevcutflow]
-    masksonecut = [i.compute() for i in res.masksonecut]
-    maskscutflow = [i.compute() for i in res.maskscutflow]
-    return Cutflow(names,
-                   nevonecut,
-                   nevcutflow,
-                   masksonecut,
-                   maskscutflow,
-                   delayed_mode=False)
+def cutflow_transform(o):
+    '''
+    Transform the cutflow object into a computable format by dask
+    '''
+    res = o.result()
+    labels = res.labels
+    nevonecut = {l:n for l,n in zip(labels,res.nevonecut)}
+    nevcutflow = {l:n for l,n in zip(labels,res.nevcutflow)}
+    masksonecut = {l:n for l,n in zip(labels,res.masksonecut)}
+    maskscutflow = {l:n for l,n in zip(labels,res.maskscutflow)}
+    return {'nevonecut':nevonecut,'nevcutflow':nevcutflow,'masksonecut':masksonecut,'maskscutflow':maskscutflow}
 
 #################################
 #Begin the processor definition #
@@ -145,8 +142,8 @@ class mHrecoil(processor.ProcessorABC):
         #Prepare cutflows
         sel0_list = ['No cut','At least one Reco Particle', 'Muon $p_T$ > 10 [GeV]', '$N_Z$', 'Opp charge muons' ]
         sel1_list = ['No cut','At least one Reco Particle', 'Muon $p_T$ > 10 [GeV]', '$N_Z$', 'Opp charge muons', '80 < $M_Z$ < 100']
-        sel0 = compute_cutflow(cut.cutflow(*sel0_list))
-        sel1 = compute_cutflow(cut.cutflow(*sel1_list))
+        sel0 = cutflow_transform(cut.cutflow(*sel0_list))
+        sel1 = cutflow_transform(cut.cutflow(*sel1_list))
         
         #Prepare output
         #Choose the required histograms and their assigned variables to fill
