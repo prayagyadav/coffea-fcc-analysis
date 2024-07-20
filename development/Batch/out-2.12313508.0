@@ -1,4 +1,0 @@
-Coffea Image: coffeateam/coffea-dask-almalinux8:2024.5.0-py3.11
-/pool/condor/dir_309907
-condor_exec.exe _condor_stderr _condor_stdout job_2.py processor_mHrecoil.py pryadav.cc srv tmp var
-condor_exec.exe _condor_stderr _condor_stdout job_2.py mHrecoil_mumu-chunk2.coffea processor_mHrecoil.py pryadav.cc __pycache__ singularity.log.job_2 srv tmp var
