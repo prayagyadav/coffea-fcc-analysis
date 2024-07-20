@@ -5,7 +5,6 @@ import os
 from processor_mHrecoil import mHrecoil
 from coffea.dataset_tools import apply_to_fileset,max_chunks
 from coffea.analysis_tools import Cutflow
-import pandas as pd
 import copy
 import dask
 
@@ -13,11 +12,15 @@ def transform(input_d):
     d = copy.deepcopy(input_d)
     for dataset in input_d.keys():
         for sel in input_d[dataset]['cutflow'].keys():
-            df = pd.DataFrame(input_d[dataset]['cutflow'][sel])
-            labels = list(df.index)
-            labels.remove('initial')
-            d[dataset]['cutflow'][sel] = Cutflow(labels,list(df['nevonecut']),list(df['nevcutflow']),list(df['masksonecut']),list(df['maskscutflow']),delayed_mode=False)
-    return d
+            c = input_d[dataset]['cutflow'][sel]
+            d[dataset]['cutflow'][sel] = Cutflow(
+                list(c['masksonecut'].keys()),
+                list(c['nevonecut'].values()),
+                list(c['nevcutflow'].values()),
+                list(c['masksonecut'].values()),
+                list(c['maskscutflow'].values()),
+                delayed_mode=False)
+    return d 
 
 dataset_runnable = {'p8_ee_ZH_ecm240': {'files': {'root://eospublic.cern.ch:1094//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_ZH_ecm240/events_034891952.root': {'object_path': 'events', 'steps': [[0, 50000], [50000, 100000]], 'num_entries': 100000, 'uuid': 'df2d48de-aa66-11eb-af5e-664c8e80beef'}, 'root://eospublic.cern.ch:1094//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_ZH_ecm240/events_034912729.root': {'object_path': 'events', 'steps': [[0, 50000], [50000, 100000]], 'num_entries': 100000, 'uuid': 'dc17e974-aa66-11eb-9d78-34518e80beef'}, 'root://eospublic.cern.ch:1094//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_ZH_ecm240/events_037707607.root': {'object_path': 'events', 'steps': [[0, 50000], [50000, 100000]], 'num_entries': 100000, 'uuid': 'ded6c220-aa66-11eb-bac3-6ea18e80beef'}, 'root://eospublic.cern.ch:1094//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_ZH_ecm240/events_038855885.root': {'object_path': 'events', 'steps': [[0, 50000], [50000, 100000]], 'num_entries': 100000, 'uuid': 'f4391366-aa66-11eb-8612-5ca18e80beef'}, 'root://eospublic.cern.ch:1094//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_ZH_ecm240/events_041407970.root': {'object_path': 'events', 'steps': [[0, 50000], [50000, 100000]], 'num_entries': 100000, 'uuid': 'de957d06-aa66-11eb-9d78-b5548e80beef'}, 'root://eospublic.cern.ch:1094//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_ZH_ecm240/events_043299326.root': {'object_path': 'events', 'steps': [[0, 50000], [50000, 100000]], 'num_entries': 100000, 'uuid': 'e85b4d5c-aa66-11eb-97b7-81508e80beef'}, 'root://eospublic.cern.ch:1094//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_ZH_ecm240/events_045124915.root': {'object_path': 'events', 'steps': [[0, 50000], [50000, 100000]], 'num_entries': 100000, 'uuid': 'e64df848-aa66-11eb-8844-3a788e80beef'}, 'root://eospublic.cern.ch:1094//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_ZH_ecm240/events_046318292.root': {'object_path': 'events', 'steps': [[0, 50000], [50000, 100000]], 'num_entries': 100000, 'uuid': 'ed9a33c8-aa66-11eb-a623-5ca18e80beef'}, 'root://eospublic.cern.ch:1094//eos/experiment/fcc/ee/generation/DelphesEvents/spring2021/IDEA/p8_ee_ZH_ecm240/events_048296984.root': {'object_path': 'events', 'steps': [[0, 50000], [50000, 100000]], 'num_entries': 100000, 'uuid': 'e4402de6-aa66-11eb-97b7-464b8e80beef'}}, 'form': None, 'metadata': None}}
 maxchunks = 10

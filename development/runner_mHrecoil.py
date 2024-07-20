@@ -238,7 +238,7 @@ from coffea.analysis_tools import Cutflow
 import copy
 import dask
 
-def transform2(input_d):
+def transform(input_d):
     d = copy.deepcopy(input_d)
     for dataset in input_d.keys():
         for sel in input_d[dataset]['cutflow'].keys():
