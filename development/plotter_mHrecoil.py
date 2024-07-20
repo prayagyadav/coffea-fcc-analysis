@@ -1,7 +1,6 @@
 import mplhep as hep, pandas as pd, numpy as np, matplotlib.pyplot as plt
 import  collections, argparse, hist, copy, glob, os, re
 from matplotlib.ticker import MultipleLocator, AutoMinorLocator
-from coffea.analysis_tools import Cutflow
 from coffea.util import load
 from pandas.core.indexes.base import Level
 from processor_mHrecoil import plot_props
@@ -10,7 +9,7 @@ from processor_mHrecoil import plot_props
 # Definition of useful functions #
 ##################################
 
-def lazy_summary(d,ntabs=1):
+def summarize(d,ntabs=1):
     '''
     Visualises a dictionary lazily:
         Gets integral of any hist.Hist object
@@ -23,11 +22,9 @@ def lazy_summary(d,ntabs=1):
     for key,value in d.items():
         print_string += f"{tab}{key} : "
         if isinstance(value,dict):
-            print_string += lazy_summary(value, ntabs=ntabs+1)
+            print_string += summarize(value, ntabs=ntabs+1)
         elif isinstance(value, hist.hist.Hist):
             print_string += f"{type(value)}\tIntegral:{value.sum()}\n"
-        elif isinstance(value, Cutflow):
-            print_string += f"{type(value)}\tInitial events:{value.result().nevcutflow[0]}\n"
         else :
             print_string += f"{type(value)}\n"
     print_string += tab+'}\n'
@@ -70,8 +67,9 @@ def accumulate(dicts):
             else:
                 if key in outdict.keys():
                     if key in exception_list:
-                        outdict[key] = value
-                    outdict[key] += value  # Add values if the key is common
+                        pass
+                    else:
+                        outdict[key] += value  # Add values if the key is common
                 else:
                     outdict[key] = value  # Otherwise, add the new key-value pair
 
@@ -83,38 +81,7 @@ def get_xsec_scale(dataset, raw_events, Luminosity):
         sf = (xsec*Luminosity)/raw_events
     else :
         raise ValueError('Raw events less than of equal to zero!')
-    return sf
-
-def get_cutflow_props(object_list, **kwargs):
-    '''
-    Takes in a list of cutflow objects and returns the sum of their component arrays after scaling them
-    '''
-    if 'scale' in kwargs:
-        scale = kwargs['scale'] #scale should be a list of scale factors corresponding to the objects
-    else :
-        scale =  np.ones(len(object_list))
-
-    onecut_list = []
-    cutflow_list = []
-    labels_list = object_list[0].result().labels
-    nevonecut_list = []
-    nevcutflow_list = []
-    for object, sf in zip(object_list, scale):
-        res = object.result()
-        if res.labels == labels_list :
-            nevonecut_list.append(sf*np.array(res.nevonecut))
-            nevcutflow_list.append(sf*np.array(res.nevcutflow))
-            onecut_hist, cutflow_hist,l = object.yieldhist()
-            onecut_list.append(sf*onecut_hist)
-            cutflow_list.append(sf*cutflow_hist)
-        else :
-            raise ValueError("The labels of cutflow objects do not match.")
-    nevonecut = sum(nevonecut_list)
-    nevcutflow = sum(nevcutflow_list)
-    onecut = sum(onecut_list)
-    cutflow = sum(cutflow_list)
-    c = collections.namedtuple('Cutflow',['labels','onecut','nevonecut','cutflow','nevcutflow'])
-    return c(labels_list, onecut, nevonecut, cutflow, nevcutflow)
+    return round(float(sf),3)
 
 def yield_plot(name, title, keys, cutflow_obs, unscaled_cutflow_obs, formats, path):
     '''
@@ -187,22 +154,24 @@ def plots(input_dict, req_hists, req_plots, selections, stack, log, formats, pat
                 datasets_signal = req_hists[key]['datasets']
                 color_signal = req_hists[key]['color']
                 hists_signal = []
-                xsec_scale_signal = []
                 for i in datasets_signal:
                     cutflow_hist = input_dict[i]['cutflow'][sel]['Cutflow']
                     cutflow_values = cutflow_hist.values()
                     Raw_Events_signal = cutflow_values[0]
+                    print(f'-->RawEvents for {i}: {Raw_Events_signal}')
                     xsec_scale_factor = get_xsec_scale(i, Raw_Events_signal, intLumi)
-                    xsec_scale_signal.append(xsec_scale_factor)
+                    print(f'-->xsec_scale for {i} = {xsec_scale_factor}')
                     Hist_signal = input_dict[i]['histograms'][sel]
                     scaled_hist_signal = { name: xsec_scale_factor*hist for name, hist in Hist_signal.items()}
+                    print(scaled_hist_signal)
                     scaled_hist_signal['Cutflow'] = xsec_scale_factor*cutflow_hist
                     hists_signal.append(scaled_hist_signal)
-                print('-->xsec_scale = ',xsec_scale_signal)
                 label_list_signal.append(label_signal)
                 dataset_list_signal.append(datasets_signal)
                 color_list_signal.append(color_signal)
+                # print(hists_signal)
                 hist_list_signal.append(accumulate(hists_signal))
+                print(hist_list_signal)
 
             elif req_hists[key]['type'] == 'Background':
                 print('-->Type: Background')
@@ -210,22 +179,22 @@ def plots(input_dict, req_hists, req_plots, selections, stack, log, formats, pat
                 datasets = req_hists[key]['datasets']
                 color = req_hists[key]['color']
                 hists = []
-                xsec_scale = []
                 for i in datasets:
                     cutflow_hist = input_dict[i]['cutflow'][sel]['Cutflow']
                     cutflow_values = cutflow_hist.values()
                     Raw_Events = cutflow_values[0]
+                    print(f'-->RawEvents for {i}: {Raw_Events}')
                     xsec_scale_factor = get_xsec_scale(i, Raw_Events, intLumi)
-                    xsec_scale.append(xsec_scale_factor)
+                    print(f'-->xsec_scale for {i} = {xsec_scale_factor}')
                     Hist = input_dict[i]['histograms'][sel]
                     scaled_hist = { name: xsec_scale_factor*hist for name, hist in Hist.items()}
                     scaled_hist['Cutflow'] = xsec_scale_factor*cutflow_hist
                     hists.append(scaled_hist)
-                print('-->xsec_scale = ',xsec_scale)
                 label_list.append(label)
                 dataset_list.append(datasets)
                 color_list.append(color)
                 hist_list.append(accumulate(hists))
+                print(hist_list)
             else:
                 raise TypeError('Unrecognised type in req_hists')
 
