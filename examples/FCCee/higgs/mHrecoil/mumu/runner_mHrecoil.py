@@ -9,6 +9,7 @@ if __name__=="__main__":
     import subprocess
     from processor_mHrecoil import mHrecoil
     from coffea.dataset_tools import apply_to_fileset,max_chunks,preprocess
+    from coffea.analysis_tools import Cutflow
     import dask
     import copy
     import time
@@ -209,7 +210,7 @@ if __name__=="__main__":
 
         return out
 
-    def create_job_python_file(dataset_runnable, maxchunks,filename, output_file):#, path):
+    def create_job_python_file(dataset_runnable, maxchunks,filename, output_file):
         s = f'''
 from coffea import util
 from coffea.nanoevents import BaseSchema
@@ -230,11 +231,8 @@ computed = dask.compute(to_compute)
 (Output,) = computed
 
 print("Saving the output to : " , "{output_file}")
-#if not os.path.exists("{path}"):
-#    os.makedirs("{path}")
-#util.save(output= Output, filename="{path}"+"/"+"{output_file}")
 util.save(output= Output, filename="{output_file}")
-print("File {output_file} saved")# at {path}")
+print("File {output_file} saved")
 print("Execution completed.")
 
         '''
@@ -277,7 +275,6 @@ queue 1'''
             s += f'condor_submit {submitfile_base_name}_{i}.sh\nsleep {wait_time}\n'
         with open('condor.sh','w') as f:
             f.write(s)
-
 
 
     ###################
