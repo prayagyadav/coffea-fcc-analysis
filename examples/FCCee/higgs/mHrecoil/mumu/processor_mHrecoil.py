@@ -64,77 +64,85 @@ def get_reco(Reconstr_branch, needed_particle, events):
     part = namedtuple('particle', list(Reconstr_branch._fields))
     return part(*[getattr(Reconstr_branch,attr)[get(events,needed_particle,'index')] for attr in Reconstr_branch._fields])
 
+def Reso_builder(lepton,resonance):
+    '''
+    Builds Resonance candidates with two oppositely charged leptons
+    Input:    lepton(var*[var*LorentzVector]),
+              resonance(float)
+    Output: Reso(var*[var*LorentzVecctor]) sorted best to worst in axis 1
+    '''
+    #Create all the combinations
+    combs = dak.combinations(lepton,2)
+    # Get dileptons
+    lep1 , lep2 = dak.unzip(combs)
+    di_lep = lep1 + lep2
+    # Choose dilep pair which is made up of two oppositely charged lep
+    q_sum_mask = dak.any((lep1.q + lep2.q) == 0, axis=1)
+    di_lep = dak.mask(di_lep , q_sum_mask)
+    # Sort by closest mass to the resonance value
+    sort_mask = dak.argsort(abs(resonance-di_muon.mass), axis=1)
+    Reso = di_lep[sort_mask]
+    return Reso
+
 #################################
 #Begin the processor definition #
 #################################
-class mHrecoil(processor.ProcessorABC):
+class mHrecoil(processor.ProcessorABC, ecm):
     '''
     mHrecoil example: e^+ + e^- rightarrow ZH rightarrow mu^+ mu^- + X(Recoil)
     Note: Use only BaseSchema with this processor
     '''
     def __init__(self):
-        pass
+        self.arg_ecm = ecm #\sqrt(s) in GeV
+        self.arg_zmass = 91.0 #GeV
+        
     def process(self,events):
+        
         #Create a Packed Selection object to get a cutflow later
         cut = PackedSelection()
         cut.add('No cut', dak.ones_like(dak.num(get(events,'ReconstructedParticles','energy'),axis=1),dtype=bool))
-
+        
         # Filter out any event with no reconstructed particles and generate Reconstructed Particle Attributes
         #ak.mask preserves array length
         at_least_one_recon = dak.num(get(events,'ReconstructedParticles','energy'), axis=1) > 0
         good_events = dak.mask(events,at_least_one_recon)
         cut.add('At least one Reco Particle', at_least_one_recon)
-
+        
         Reco = get_all(good_events,'ReconstructedParticles')
         Muons = get_reco(Reco,'Muon#0',good_events)
-
+        
         # Create Array of Muon Lorentz Vector
         Muon = ak.zip({"px":Muons.momentum_x,"py":Muons.momentum_y,"pz":Muons.momentum_z,"E":Muons.energy,"q":Muons.charge,}, with_name="Momentum4D")
-
+        
         # Muon pt > 10
         Muon_pt_cut = dak.any(Muon.pt > 10.0, axis=1)
         Muon = dak.mask(Muon, Muon_pt_cut) #ak.mask to preserve number of events
         cut.add('Muon $p_T$ > 10 [GeV]',Muon_pt_cut)
-
-        # Produce all the combinations of Muon Pairs possible within an event
-        combs = dak.combinations(Muon,2)
-
-        # Get dimuons
-        mu1 , mu2 = dak.unzip(combs)
-        di_muon = mu1 + mu2
-
-        # Selection 0 : Only one Z candidate in an event
-        di_muon = dak.mask(di_muon, dak.num(di_muon) == 1)
-        cut.add('$N_Z = 1$',dak.num(Muon) == 2 ) #Having one Z candidate is same as having exactly two muons in an even
-
-        # Choose dimuon which is made up of two oppositely charged muons
-        q_sum = mu1.q + mu2.q
-        q_sum_array = dak.mask(q_sum, ak.num(q_sum) == 1)
-        q_sum_mask = dak.all(q_sum_array == 0, axis=1)
-        Z_cand = dak.mask(di_muon , q_sum_mask)
-        cut.add('Opp charge muons',q_sum_mask)
-
-
-        #Recoil Calculation
-        ecm = 240.0 #GeV # com energy
-        Recoil = ak.zip({"px":0.0-Z_cand.px,"py":0.0-Z_cand.py,"pz":0.0-Z_cand.pz,"E":ecm-Z_cand.E},with_name="Momentum4D")
-
+        
+        Z_cand = Reso_builder(Muon, arg_zmass)
+        
+        # Selection 0 : only one Z candidate
+        one_z = ak.num(Z_cand,axis=1) == 1
+        Z_cand_sel0 = ak.mask(Z_cand, one_z)
+        cut.add('$N_Z = 1$', one_z ) 
         sel0_ocl = cut.cutflow(*cut.names).yieldhist()
-
-        # Selection 1 : Selection 0 + 80 < M_Z < 100
-        zmassmask = (Z_cand.mass > 80) & (Z_cand.mass < 100)
-        Z_cand_sel1 = Z_cand[zmassmask]
-        Recoil_sel1 = Recoil[zmassmask]
-        zmassmask = ak.fill_none(zmassmask,[False],axis=0) #Replace None values at axis 0 with [False]
-        zmassmask = ak.flatten(zmassmask)
+        
+        # Selection 1 : 80 < M_Z < 100
+        Z_mass_mask = (Z_cand_sel0.mass > 80.0) & (Z_cand_sel0.mass < 100.0)
+        Z_mass_mask = dak.fill_none(Z_mass_mask,[False],axis=0)
+        Z_mass_mask = dak.flatten(Z_mass_mask)
+        Z_cand_sel1 = ak.mask(Z_cand_sel0, Z_mass_mask)
         cut.add('80 < $M_Z$ < 100',zmassmask)
-
         sel1_ocl = cut.cutflow(*cut.names).yieldhist()
-
+        
+        #Recoil Calculation
+        Recoil_sel0 = ak.zip({"px":0.0-Z_cand_sel0.px,"py":0.0-Z_cand_sel0.py,"pz":0.0-Z_cand_sel0.pz,"E":arg_ecm-Z_cand_sel0.E},with_name="Momentum4D")
+        Recoil_sel1 = ak.zip({"px":0.0-Z_cand_sel1.px,"py":0.0-Z_cand_sel1.py,"pz":0.0-Z_cand_sel1.pz,"E":arg_ecm-Z_cand_sel1.E},with_name="Momentum4D")
+        
         #Prepare output
         #Choose the required histograms and their assigned variables to fill
-        names = ['Zm','Zm_zoom','Recoilm','Recoilm_zoom','Recoilm_zoom1','Recoilm_zoom2','Recoilm_zoom3','Recoilm_zoom4','Recoilm_zoom5','Recoilm_zoom6']
-        vars_sel0 = ([Z_cand.mass]*2) + ([Recoil.mass]*8)
+        names = plot_props.columns.to_list()
+        vars_sel0 = ([Z_cand_sel0.mass]*2) + ([Recoil_sel0.mass]*8)
         vars_sel1 = ([Z_cand_sel1.mass]*2) + ([Recoil_sel1.mass]*8)
         Output = {
             'histograms': {
