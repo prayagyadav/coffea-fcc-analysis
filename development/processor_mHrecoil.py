@@ -115,7 +115,7 @@ class mHrecoil(processor.ProcessorABC):
         Muon = ak.zip({"px":Muons.momentum_x,"py":Muons.momentum_y,"pz":Muons.momentum_z,"E":Muons.energy,"q":Muons.charge,}, with_name="Momentum4D")
         
         # Muon pt > 10
-        Muon_pt_cut = dak.any(Muon.pt > 10.0, axis=1)
+        Muon_pt_cut = dak.all(Muon.pt > 10.0, axis=1)
         Muon = dak.mask(Muon, Muon_pt_cut) #ak.mask to preserve number of events
         cut.add('Muon $p_T$ > 10 [GeV]',Muon_pt_cut)
         
