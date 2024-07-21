@@ -22,8 +22,6 @@ class brew_coffea():
             print("Brewing your coffea ...")
             time.sleep(1)
     def _animateframes(self):
-        def print_update(s,**kwargs):
-            return print(f"\r{s}", flush=True, **kwargs)
 
         frame1_text = '''
 ________________________
@@ -73,26 +71,28 @@ ________________________
         u = '\033[A'
         print()
         while self.done:
-            nlines=len(frames[0].strip().split('\n'))
+            self.nlines=len(frames[0].strip().split('\n'))
             #First Frame
             for line in frames[0].strip().split('\n'):
-                print_update(line)
+                print(f"\r{line}", flush=True)
             time.sleep(time_sec)
-
-            #Rest of the Frames
-            for i,frame in enumerate(frames):
-                if i == 0:
-                    continue
-                for j,line in enumerate(frame.strip().split('\n')):
-                    if j == 0:
-                        print_update(u*nlines+line)
-                    else:
-                        print_update(line)
-                time.sleep(time_sec)
-            print_update(u*nlines,end="")
+            if self.done:
+                #Rest of the Frames
+                for i,frame in enumerate(frames):
+                    if i == 0:
+                        continue
+                    for j,line in enumerate(frame.strip().split('\n')):
+                        if j == 0:
+                            print(f"\r{u*self.nlines+line}", flush=True)
+                        else:
+                            print(f"\r{line}", flush=True)
+                    time.sleep(time_sec)
+                print(f"\r{u*self.nlines}", flush=True,end="")
         print()
  
     def stop(self):
+        #n = '\n'
+        #print(f"{n*12}", flush=True,end="")
         self.done = False
     def __exit__(self, *args):
         self.stop()

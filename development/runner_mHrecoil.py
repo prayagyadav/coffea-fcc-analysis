@@ -13,7 +13,6 @@ if __name__=="__main__":
     import dask
     import copy
     import time
-    from brew_coffea import brew_coffea
     from dask.diagnostics import ProgressBar
     pgb = ProgressBar()
     pgb.register()
@@ -309,14 +308,12 @@ queue 1'''
         print("Executing locally with dask ...")
         for i in range(len(dataset_runnable)):
             print('Chunk : ',i)
-
-            with brew_coffea():
-                to_compute = apply_to_fileset(
-                            mHrecoil(ecm=ecm),
-                            max_chunks(dataset_runnable[i], inputs.maxchunks),
-                            schemaclass=BaseSchema,
-                )
-                computed = dask.compute(to_compute)
+            to_compute = apply_to_fileset(
+                        mHrecoil(ecm=ecm),
+                        max_chunks(dataset_runnable[i], inputs.maxchunks),
+                        schemaclass=BaseSchema,
+            )
+            computed = dask.compute(to_compute)
             (Out,) = computed
             Output.append(Out)
             if inputs.chunks > 1:
