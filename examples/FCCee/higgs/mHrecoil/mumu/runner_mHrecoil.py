@@ -75,6 +75,7 @@ if __name__=="__main__":
         'p8_ee_WW_ecm240':0.5,
         'p8_ee_ZH_ecm240':0.2
     }
+    ecm = 240.0 # #\sqrt(s) in GeV
     output_file = inputs.outfile+".coffea"
     path = inputs.path
 
@@ -210,7 +211,7 @@ if __name__=="__main__":
 
         return out
 
-    def create_job_python_file(dataset_runnable, maxchunks,filename, output_file):
+    def create_job_python_file(ecm, dataset_runnable, maxchunks,filename, output_file):
         s = f'''
 from coffea import util
 from coffea.nanoevents import BaseSchema
@@ -223,7 +224,7 @@ dataset_runnable = {dataset_runnable}
 maxchunks = {maxchunks}
 
 to_compute = apply_to_fileset(
-            mHrecoil(),
+            mHrecoil(ecm={ecm}),
             max_chunks(dataset_runnable, maxchunks),
             schemaclass=BaseSchema,
 )
@@ -308,7 +309,7 @@ queue 1'''
         for i in range(len(dataset_runnable)):
             print('Chunk : ',i)
             to_compute = apply_to_fileset(
-                        mHrecoil(),
+                        mHrecoil(ecm=ecm),
                         max_chunks(dataset_runnable[i], inputs.maxchunks),
                         schemaclass=BaseSchema,
             )
@@ -339,6 +340,7 @@ queue 1'''
             else:
                 output_filename = output_file
             create_job_python_file(
+                ecm,
                 dataset_runnable[i],
                 inputs.maxchunks,
                 f'job_{i}.py',
