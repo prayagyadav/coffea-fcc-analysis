@@ -4,6 +4,7 @@ from matplotlib.ticker import MultipleLocator, AutoMinorLocator
 from coffea.util import load
 from pandas.core.indexes.base import Level
 from processor_mHrecoil import plot_props
+from runner_mHrecoil import ecm
 
 ##################################
 # Definition of useful functions #
@@ -334,7 +335,7 @@ def makeplot(fig, ax, hist, name, title, label, xlabel, ylabel, bins, xmin, xmax
     )
 
     ax.text(0.27, 1.02, 'FCC Analyses: FCC-ee Simulation (Delphes)', fontsize=9, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
-    ax.text(0.92, 1.02, '$\\sqrt{s} = 240GeV$', fontsize=9, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
+    ax.text(0.92, 1.02, f'$\\sqrt{{s}} = {energy}GeV$', fontsize=9, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
 
     if  cutflow_mode:
         ax.set_ylabel(ylabel)
@@ -391,7 +392,7 @@ plot_path = 'outputs/FCCee/higgs/mH-recoil/mumu/plots/'
 intLumi        = 5.0e+06 #in pb-1
 ana_tex        = 'e^{+}e^{-} \\rightarrow ZH \\rightarrow \\mu^{+}\\mu^{-} + X'
 delphesVersion = '3.4.2'
-energy         = 240.0 #in GeV
+energy         = ecm #in GeV
 collider       = 'FCC-ee'
 
 
