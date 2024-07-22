@@ -107,7 +107,7 @@ if __name__=="__main__":
                     dict = yaml.safe_load(f)
                 print('Loaded : '+full_path)
             except:
-                raise FileNotFoundError('Could not find yaml files at {filesystem_path}')
+                raise FileNotFoundError(f'Could not find yaml files at {filesystem_path}')
             yaml_dict[sample] = dict
         return yaml_dict
 
