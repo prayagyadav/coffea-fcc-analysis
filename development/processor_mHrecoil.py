@@ -122,9 +122,11 @@ class mHrecoil(processor.ProcessorABC):
         # Create Array of Muon Lorentz Vector
         Muon = ak.zip({"px":Muons.momentum_x,"py":Muons.momentum_y,"pz":Muons.momentum_z,"E":Muons.energy,"q":Muons.charge,}, with_name="Momentum4D")
 
-        # Harder pt_mask : All leptons pt > 10
-        pt_mask = dak.all(Muon.pt > 10, axis=1)
-        Muon = dak.mask(Muon, pt_mask)
+        # Get Muons with a pt cut , if none of the muons in an event pass the cut, return none, ensuring the size of the cutflow
+        pt_mask = dak.any(Muon.pt > 10, axis = 1)
+        temp = dak.mask(Muon, pt_mask)
+        Muon = Muon[temp.pt > 10]
+        cut.add('At least one Muon pt > 10', pt_mask)
 
         # Get best Resonance around Z mass in an event
         Z_cand = Reso_builder(Muon, self.arg_zmass) 
