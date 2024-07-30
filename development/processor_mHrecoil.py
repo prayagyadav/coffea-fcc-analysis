@@ -9,6 +9,7 @@ import hist
 import vector
 vector.register_awkward()
 
+
 ##########################
 # Define plot properties #
 ##########################
@@ -25,7 +26,7 @@ plot_props = pd.DataFrame({
     'Recoilm_zoom6':{'name':'Recoilm_zoom6','title':'Leptonic Recoil mass','xlabel':'$Recoil_{mass}$ [GeV]','ylabel':'Events','bins':100,'xmin':130.3,'xmax':140}
 })
 
-def get_1Dhist(name, var, flatten=True):
+def get_1Dhist(name, var, flatten=False):
     '''
     name: eg. Zm
     var: eg. variable containing array of mass of Z
@@ -33,7 +34,8 @@ def get_1Dhist(name, var, flatten=True):
     Returns a histogram
     '''
     props = plot_props[name]
-    if flatten : var = dak.ravel(var)
+    if flatten : var = dak.ravel(var) # Removes None values and all the nesting
+    var = var[~dak.is_none(var, axis=0)] # Remove None values only
     return hda.Hist.new.Reg(props.bins, props.xmin, props.xmax).Double().fill(var)
 
 def get(events,collection,attribute,*cut):
@@ -64,25 +66,37 @@ def get_reco(Reconstr_branch, needed_particle, events):
     part = namedtuple('particle', list(Reconstr_branch._fields))
     return part(*[getattr(Reconstr_branch,attr)[get(events,needed_particle,'index')] for attr in Reconstr_branch._fields])
 
-def Reso_builder(lepton,resonance):
+def Reso_builder(lepton, resonance, **kwargs):
     '''
     Builds Resonance candidates with two oppositely charged leptons
     Input:    lepton(var*[var*LorentzVector]),
               resonance(float)
-    Output: Reso(var*[var*LorentzVecctor]) sorted best to worst in axis 1
+    Output: Reso([var*LorentzVecctor]) best resonance candidate in each event (maximum one per event)
     '''
     #Create all the combinations
     combs = dak.combinations(lepton,2)
     # Get dileptons
     lep1 , lep2 = dak.unzip(combs)
     di_lep = lep1 + lep2
+    # An event should have at least one dimuon pair composed of muons with pt>10
+    pt_mask = dak.any(lep1.pt > 10, axis=1) & dak.any(lep2.pt > 10, axis=1) #this means at least two muons with pt > 10
+    di_lep = dak.mask(di_lep , pt_mask)
     # Choose dilep pair which is made up of two oppositely charged lep
     q_sum_mask = dak.any((lep1.q + lep2.q) == 0, axis=1)
     di_lep = dak.mask(di_lep , q_sum_mask)
     # Sort by closest mass to the resonance value
     sort_mask = dak.argsort(abs(resonance-di_lep.mass), axis=1)
     Reso = di_lep[sort_mask]
+    #Choose the best candidate
+    Reso = dak.fill_none(Reso,[],axis=0) #Transform the None values at axis 0 to [], so that they survive the next operation
+    Reso = dak.firsts(Reso) #Chooses the first elements and flattens out, [] gets converted to None
+
+    if "cut" in kwargs:
+        kwargs["cut"].add("Muon pt > 10",pt_mask)
+        kwargs["cut"].add("Opp charge muons",q_sum_mask)
+        return (Reso,kwargs["cut"])
     return Reso
+
 
 #################################
 #Begin the processor definition #
@@ -97,7 +111,7 @@ class mHrecoil(processor.ProcessorABC):
         self.arg_zmass = 91.0 #GeV
         
     def process(self,events):
-        
+
         #Create a Packed Selection object to get a cutflow later
         cut = PackedSelection()
         cut.add('No cut', dak.ones_like(dak.num(get(events,'ReconstructedParticles','energy'),axis=1),dtype=bool))
@@ -114,23 +128,15 @@ class mHrecoil(processor.ProcessorABC):
         # Create Array of Muon Lorentz Vector
         Muon = ak.zip({"px":Muons.momentum_x,"py":Muons.momentum_y,"pz":Muons.momentum_z,"E":Muons.energy,"q":Muons.charge,}, with_name="Momentum4D")
         
-        # Muon pt > 10
-        Muon_pt_cut = dak.all(Muon.pt > 10.0, axis=1)
-        Muon = dak.mask(Muon, Muon_pt_cut) #ak.mask to preserve number of events
-        cut.add('Muon $p_T$ > 10 [GeV]',Muon_pt_cut)
-        
-        Z_cand = Reso_builder(Muon, self.arg_zmass)
-        
+        Z_cand, cut = Reso_builder(Muon, self.arg_zmass, cut=cut)
+
         # Selection 0 : only one Z candidate
-        one_z = ak.num(Z_cand,axis=1) == 1
-        Z_cand_sel0 = ak.mask(Z_cand, one_z)
-        cut.add('$N_Z = 1$', one_z ) 
+        cut.add('$N_Z = 1$', ~dak.is_none(Z_cand, axis=0) ) #Non None events
+        Z_cand_sel0 = Z_cand
         sel0_ocl = cut.cutflow(*cut.names).yieldhist()
         
         # Selection 1 : 80 < M_Z < 100
         Z_mass_mask = (Z_cand_sel0.mass > 80.0) & (Z_cand_sel0.mass < 100.0)
-        Z_mass_mask = dak.fill_none(Z_mass_mask,[False],axis=0)
-        Z_mass_mask = dak.flatten(Z_mass_mask)
         Z_cand_sel1 = ak.mask(Z_cand_sel0, Z_mass_mask)
         cut.add('80 < $M_Z$ < 100',Z_mass_mask)
         sel1_ocl = cut.cutflow(*cut.names).yieldhist()
@@ -138,6 +144,7 @@ class mHrecoil(processor.ProcessorABC):
         #Recoil Calculation
         Recoil_sel0 = ak.zip({"px":0.0-Z_cand_sel0.px,"py":0.0-Z_cand_sel0.py,"pz":0.0-Z_cand_sel0.pz,"E":self.arg_ecm-Z_cand_sel0.E},with_name="Momentum4D")
         Recoil_sel1 = ak.zip({"px":0.0-Z_cand_sel1.px,"py":0.0-Z_cand_sel1.py,"pz":0.0-Z_cand_sel1.pz,"E":self.arg_ecm-Z_cand_sel1.E},with_name="Momentum4D")
+        #Bug: Recoil computed this way are forced to have integer values, idk why
         
         #Prepare output
         #Choose the required histograms and their assigned variables to fill
@@ -154,7 +161,6 @@ class mHrecoil(processor.ProcessorABC):
                 'sel1': {'Onecut':sel1_ocl[0],'Cutflow':sel1_ocl[1],'Labels':sel1_ocl[2]}
             }
         }
-
         return Output
 
     def postprocess(self, accumulator):
