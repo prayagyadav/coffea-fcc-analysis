@@ -72,7 +72,7 @@ def yield_plot(name, title, keys, scaled, unscaled, formats, path):
     '''
 
     fig, ax = plt.subplots(figsize=(8,8))
-    ax.text(0.25, 1.02, 'FCC Analyses: FCC Simulation Delphes', fontsize=10, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
+    ax.text(0.25, 1.02, 'FCC Analyses: FCC-ee Simulation (Delphes)', fontsize=10, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
     ax.text(0.92, 1.02, '$\\sqrt{s} = '+str(energy)+' GeV$', fontsize=10, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
     ax.text(0.10, 0.95, collider, fontsize=14, horizontalalignment='left', verticalalignment='center', transform=ax.transAxes)
     ax.text(0.10, 0.88,'Delphes Version: '+delphesVersion, fontsize=14, horizontalalignment='left', verticalalignment='center', transform=ax.transAxes)
@@ -117,7 +117,7 @@ def cuts_table(name, title, labels, formats, path):
     '''
 
     fig, ax = plt.subplots(figsize=(8,8))
-    ax.text(0.25, 1.02, 'FCC Analyses: FCC Simulation Delphes', fontsize=10, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
+    ax.text(0.25, 1.02, 'FCC Analyses: FCC-ee Simulation (Delphes)', fontsize=10, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
     ax.text(0.92, 1.02, '$\\sqrt{s} = '+str(energy)+' GeV$', fontsize=10, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
 
     level, linespacing = 0.90, 0.05
@@ -335,7 +335,7 @@ def makeplot(fig, ax, hist, name, title, label, xlabel, ylabel, bins, xmin, xmax
     )
 
     ax.text(0.27, 1.02, 'FCC Analyses: FCC-ee Simulation (Delphes)', fontsize=9, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
-    ax.text(0.92, 1.02, f'$\\sqrt{{s}} = {energy}GeV$', fontsize=9, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
+    ax.text(0.92, 1.02, f'$\\sqrt{{s}} = {energy} GeV$', fontsize=9, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
 
     if  cutflow_mode:
         ax.set_ylabel(ylabel)
