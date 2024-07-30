@@ -138,10 +138,12 @@ class mHrecoil(processor.ProcessorABC):
         sel0_ocl = cut.cutflow(*cut.names).yieldhist()
         
         # Selection 1 : 80 < M_Z < 100
-        Z_mass_mask = (Z_cand_sel0.mass > 80.0) & (Z_cand_sel0.mass < 100.0)
-        Z_cand_sel1 = ak.mask(Z_cand_sel0, Z_mass_mask)
+        Z_mass_mask = (Z_cand.mass > 80.0) & (Z_cand.mass < 100.0)
+        Z_cand_sel1 = ak.mask(Z_cand, Z_mass_mask)
         cut.add('80 < $M_Z$ < 100',Z_mass_mask)
-        sel1_ocl = cut.cutflow(*cut.names).yieldhist()
+        sel = [*cut.names]
+        sel.remove(sel[-2])
+        sel1_ocl = cut.cutflow(*sel).yieldhist()
         
         #Recoil Calculation
         Recoil_sel0 = ak.zip({"px":0.0-Z_cand_sel0.px,"py":0.0-Z_cand_sel0.py,"pz":0.0-Z_cand_sel0.pz,"E":self.arg_ecm-Z_cand_sel0.E},with_name="Momentum4D")
