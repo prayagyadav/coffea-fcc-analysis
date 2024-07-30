@@ -75,8 +75,8 @@ def Reso_builder(lepton, resonance, **kwargs):
     '''
     #Create all the combinations
     # Harder pt_mask : All leptons pt > 10
-    pt_mask = dak.all(leptons.pt > 10, axis=1)
-    leptons = dak.mask(leptons, pt_mask)
+    pt_mask = dak.all(lepton.pt > 10, axis=1)
+    leptons = dak.mask(lepton, pt_mask)
     
     combs = dak.combinations(lepton,2)
     # Get dileptons
