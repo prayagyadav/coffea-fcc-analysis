@@ -30,7 +30,7 @@ def get_1Dhist(name, var, flatten=False):
     '''
     name: eg. Zm
     var: eg. variable containing array of mass of Z
-    flatten: If to flatten var before fill; True by default
+    flatten: If to flatten var before fill; False by default
     Returns a histogram
     '''
     props = plot_props[name]
