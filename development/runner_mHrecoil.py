@@ -1,3 +1,17 @@
+# Define the requirements
+
+process = {
+    'collider':'FCCee',
+    'campaign':'spring2021',
+    'detector':'IDEA',
+    'samples':['p8_ee_ZZ_ecm240','p8_ee_WW_ecm240','p8_ee_ZH_ecm240']
+}
+fraction = {
+    'p8_ee_ZZ_ecm240':0.005,
+    'p8_ee_WW_ecm240':0.5,
+    'p8_ee_ZH_ecm240':0.2
+}
+ecm = 240.0 # #\sqrt(s) in GeV
 
 if __name__=="__main__":
     from coffea import util
@@ -64,18 +78,6 @@ if __name__=="__main__":
     ###################################
     # Define functions and parameters #
     ###################################
-    process = {
-        'collider':'FCCee',
-        'campaign':'spring2021',
-        'detector':'IDEA',
-        'samples':['p8_ee_ZZ_ecm240','p8_ee_WW_ecm240','p8_ee_ZH_ecm240']
-    }
-    fraction = {
-        'p8_ee_ZZ_ecm240':0.005,
-        'p8_ee_WW_ecm240':0.5,
-        'p8_ee_ZH_ecm240':0.2
-    }
-    ecm = 240.0 # #\sqrt(s) in GeV
     output_file = inputs.outfile+".coffea"
     path = inputs.path
 
