@@ -74,13 +74,17 @@ def Reso_builder(lepton, resonance, **kwargs):
     Output: Reso([var*LorentzVecctor]) best resonance candidate in each event (maximum one per event)
     '''
     #Create all the combinations
+    # Harder pt_mask : All leptons pt > 10
+    pt_mask = dak.all(leptons.pt > 10, axis=1)
+    leptons = dak.mask(leptons, pt_mask)
+    
     combs = dak.combinations(lepton,2)
     # Get dileptons
     lep1 , lep2 = dak.unzip(combs)
     di_lep = lep1 + lep2
     # An event should have at least one dimuon pair composed of muons with pt>10
-    pt_mask = dak.any(lep1.pt > 10, axis=1) & dak.any(lep2.pt > 10, axis=1) #this means at least two muons with pt > 10
-    di_lep = dak.mask(di_lep , pt_mask)
+    # pt_mask = dak.any(lep1.pt > 10, axis=1) & dak.any(lep2.pt > 10, axis=1) #this means at least two muons with pt > 10
+    # di_lep = dak.mask(di_lep , pt_mask)
     # Choose dilep pair which is made up of two oppositely charged lep
     q_sum_mask = dak.any((lep1.q + lep2.q) == 0, axis=1)
     di_lep = dak.mask(di_lep , q_sum_mask)
