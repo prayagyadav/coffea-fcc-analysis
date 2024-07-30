@@ -66,39 +66,29 @@ def get_reco(Reconstr_branch, needed_particle, events):
     part = namedtuple('particle', list(Reconstr_branch._fields))
     return part(*[getattr(Reconstr_branch,attr)[get(events,needed_particle,'index')] for attr in Reconstr_branch._fields])
 
-def Reso_builder(lepton, resonance, **kwargs):
+def Reso_builder(lepton, resonance):
     '''
-    Builds Resonance candidates with two oppositely charged leptons
+    Builds Resonance candidates
     Input:    lepton(var*[var*LorentzVector]),
               resonance(float)
     Output: Reso([var*LorentzVecctor]) best resonance candidate in each event (maximum one per event)
     '''
     #Create all the combinations
-    # Harder pt_mask : All leptons pt > 10
-    pt_mask = dak.all(lepton.pt > 10, axis=1)
-    leptons = dak.mask(lepton, pt_mask)
-    
     combs = dak.combinations(lepton,2)
     # Get dileptons
     lep1 , lep2 = dak.unzip(combs)
-    di_lep = lep1 + lep2
-    # An event should have at least one dimuon pair composed of muons with pt>10
-    # pt_mask = dak.any(lep1.pt > 10, axis=1) & dak.any(lep2.pt > 10, axis=1) #this means at least two muons with pt > 10
-    # di_lep = dak.mask(di_lep , pt_mask)
-    # Choose dilep pair which is made up of two oppositely charged lep
-    q_sum_mask = dak.any((lep1.q + lep2.q) == 0, axis=1)
-    di_lep = dak.mask(di_lep , q_sum_mask)
+    di_lep = lep1 + lep2 # This process drops any other field except 4 momentum fields
+
+    di_lep = ak.zip({"px":di_lep.px,"py":di_lep.py,"pz":di_lep.pz,"E":di_lep.E,"q":lep1.q + lep2.q,}, with_name="Momentum4D")
+    
     # Sort by closest mass to the resonance value
     sort_mask = dak.argsort(abs(resonance-di_lep.mass), axis=1)
     Reso = di_lep[sort_mask]
+
     #Choose the best candidate
     Reso = dak.fill_none(Reso,[],axis=0) #Transform the None values at axis 0 to [], so that they survive the next operation
     Reso = dak.firsts(Reso) #Chooses the first elements and flattens out, [] gets converted to None
 
-    if "cut" in kwargs:
-        kwargs["cut"].add("Muon pt > 10",pt_mask)
-        kwargs["cut"].add("Opp charge muons",q_sum_mask)
-        return (Reso,kwargs["cut"])
     return Reso
 
 
@@ -131,12 +121,18 @@ class mHrecoil(processor.ProcessorABC):
         
         # Create Array of Muon Lorentz Vector
         Muon = ak.zip({"px":Muons.momentum_x,"py":Muons.momentum_y,"pz":Muons.momentum_z,"E":Muons.energy,"q":Muons.charge,}, with_name="Momentum4D")
-        
-        Z_cand, cut = Reso_builder(Muon, self.arg_zmass, cut=cut)
 
-        # Selection 0 : only one Z candidate
-        cut.add('$N_Z = 1$', ~dak.is_none(Z_cand, axis=0) ) #Non None events
-        Z_cand_sel0 = Z_cand
+        # Harder pt_mask : All leptons pt > 10
+        pt_mask = dak.all(Muon.pt > 10, axis=1)
+        Muon = dak.mask(Muon, pt_mask)
+
+        # Get best Resonance around Z mass in an event
+        Z_cand = Reso_builder(Muon, self.arg_zmass) 
+
+        # Selection 0 : Z q=0 candidate
+        q_mask = Z_cand.q == 0
+        Z_cand_sel0 = dak.mask(Z_cand, q_mask)
+        cut.add("Z_q = 0", q_mask)
         sel0_ocl = cut.cutflow(*cut.names).yieldhist()
         
         # Selection 1 : 80 < M_Z < 100
